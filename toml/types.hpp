@@ -1,5 +1,5 @@
-#ifndef TOML98_TYPES_H
-#define TOML98_TYPES_H
+#ifndef TOML_TYPES_HPP
+#define TOML_TYPES_HPP
 #include <toml/strings.hpp>
 #include <boost/date_time/gregorian/gregorian_types.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
@@ -24,4 +24,4 @@ typedef boost::container::vector<value>   array;
 typedef boost::container::map<key, value> table;
 
 } // toml
-#endif// TOML98_TYPES_H
+#endif// TOML_TYPES_HPP

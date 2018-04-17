@@ -1,5 +1,5 @@
-#ifndef TOML98_VALUE_H
-#define TOML98_VALUE_H
+#ifndef TOML_VALUE_HPP
+#define TOML_VALUE_HPP
 #include <toml/type_traits.hpp>
 #include <boost/config.hpp>
 #include <boost/blank.hpp>
@@ -299,4 +299,4 @@ operator<<(std::basic_ostream<charT, traits>& os, value::kind k)
 }
 
 } // toml
-#endif//TOML98_VALUE_H
+#endif//TOML_VALUE_HPP

@@ -1,5 +1,5 @@
-#ifndef TOML98_STRINGS_HPP
-#define TOML98_STRINGS_HPP
+#ifndef TOML_STRINGS_HPP
+#define TOML_STRINGS_HPP
 #include <toml/predefine.hpp>
 #include <boost/config.hpp>
 #include <string>
@@ -61,4 +61,4 @@ struct string
 };
 
 } // toml
-#endif// TOML98_STRINGS_HPP
+#endif// TOML_STRINGS_HPP

@@ -1,5 +1,5 @@
-#ifndef TOML98_TYPE_TRAITS_H
-#define TOML98_TYPE_TRAITS_H
+#ifndef TOML_TYPE_TRAITS_HPP
+#define TOML_TYPE_TRAITS_HPP
 #include <toml/types.hpp>
 #include <boost/mpl/and.hpp>
 #include <boost/mpl/or.hpp>
@@ -79,4 +79,4 @@ template<typename T> struct is_convertible<T, value>
 
 
 } // toml
-#endif// TOML98_TYPE_TRAITS_H
+#endif// TOML_TYPE_TRAITS_HPP
