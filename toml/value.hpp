@@ -47,7 +47,7 @@ struct value
         table_tag    = 9,
         undefined    = 10
     };
-    
+
     value(){}
     ~value(){}
     value(const value& v): storage_(v.storage_){}
@@ -255,7 +255,7 @@ apply_visitor(Visitor vis, value& v)
 
 template<typename T> struct to_kind
 {BOOST_STATIC_CONSTEXPR typename value::kind value = value::undefined;};
-template<typename T> 
+template<typename T>
 BOOST_CONSTEXPR_OR_CONST typename value::kind to_kind<T>::value;
 
 template<> struct to_kind<boolean>
