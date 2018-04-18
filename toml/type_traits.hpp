@@ -1,13 +1,21 @@
 #ifndef TOML_TYPE_TRAITS_HPP
 #define TOML_TYPE_TRAITS_HPP
 #include <toml/types.hpp>
+#include <boost/config.hpp>
 #include <boost/mpl/and.hpp>
 #include <boost/mpl/or.hpp>
 #include <boost/mpl/not.hpp>
-#include <boost/cstdint.hpp>
 #include <boost/core/enable_if.hpp>
+#include <boost/cstdint.hpp>
 #include <boost/type_traits.hpp>
 #include <boost/iterator/iterator_traits.hpp>
+#include <boost/tti/has_type.hpp>
+#include <boost/array.hpp>
+
+// if defined, include will be skipped.
+#ifndef BOOST_NO_CXX11_HDR_ARRAY
+#include <array>
+#endif // BOOST_NO_CXX11_HDR_ARRAY
 
 namespace toml
 {
@@ -76,6 +84,39 @@ template<typename T> struct is_convertible<T, value>
         is_convertible<typename boost::remove_cv_ref<T>::type, array>,
         is_convertible<typename boost::remove_cv_ref<T>::type, table>
     >{};
+
+// is_array_like, is_map_like -----------------------------------------------
+
+// (boost|std)::array have no ctor. toml::get should treat this in different way
+template<typename T> struct is_fixed_size_array : boost::false_type{};
+template<typename T, std::size_t N>
+struct is_fixed_size_array<boost::array<T, N> > : boost::true_type{};
+
+#ifndef BOOST_NO_CXX11_HDR_ARRAY
+template<typename T, std::size_t N>
+struct is_fixed_size_array<std::array<T, N> > : boost::true_type{};
+#endif
+
+
+BOOST_TTI_HAS_TYPE(iterator)    // has_type_iterator
+BOOST_TTI_HAS_TYPE(value_type)  // has_type_value_type
+BOOST_TTI_HAS_TYPE(key_type)    // has_type_key_type
+BOOST_TTI_HAS_TYPE(mapped_type) // has_type_mapped_type
+
+template<typename T> struct is_array_like : boost::mpl::and_<
+        has_type_iterator<T>,
+        has_type_value_type<T>,
+        boost::mpl::not_<has_type_key_type<T> >,
+        boost::mpl::not_<has_type_mapped_type<T> >,
+        boost::mpl::not_<is_fixed_size_array<T> >
+    >{};
+template<typename T> struct is_map_like : boost::mpl::and_<
+        has_type_iterator<T>,
+        has_type_value_type<T>,
+        has_type_key_type<T>,
+        has_type_mapped_type<T>
+    >{};
+
 
 
 } // toml
