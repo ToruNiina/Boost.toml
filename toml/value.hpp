@@ -198,7 +198,7 @@ struct value
     template<typename T>
     typename boost::enable_if<is_toml_type<T>, bool>::type
     is() const BOOST_NOEXCEPT_OR_NOTHROW
-    {return to_kind<T>::value == this->which();}
+    {return to_kind<T>::val == this->which();}
 
     template<typename T>
     typename boost::enable_if<is_toml_type<T>, T>::type&
@@ -254,28 +254,28 @@ apply_visitor(Visitor vis, value& v)
 }
 
 template<typename T> struct to_kind
-{BOOST_STATIC_CONSTEXPR typename value::kind value = value::undefined;};
+{BOOST_STATIC_CONSTEXPR typename value::kind val = value::undefined;};
 template<typename T>
-BOOST_CONSTEXPR_OR_CONST typename value::kind to_kind<T>::value;
+BOOST_CONSTEXPR_OR_CONST typename value::kind to_kind<T>::val;
 
 template<> struct to_kind<boolean>
-{BOOST_STATIC_CONSTEXPR value::kind value = value::boolean_tag;};
+{BOOST_STATIC_CONSTEXPR value::kind val = value::boolean_tag;};
 template<> struct to_kind<integer>
-{BOOST_STATIC_CONSTEXPR value::kind value = value::integer_tag;};
+{BOOST_STATIC_CONSTEXPR value::kind val = value::integer_tag;};
 template<> struct to_kind<floating>
-{BOOST_STATIC_CONSTEXPR value::kind value = value::float_tag;};
+{BOOST_STATIC_CONSTEXPR value::kind val = value::float_tag;};
 template<> struct to_kind<string>
-{BOOST_STATIC_CONSTEXPR value::kind value = value::string_tag;};
+{BOOST_STATIC_CONSTEXPR value::kind val = value::string_tag;};
 template<> struct to_kind<date>
-{BOOST_STATIC_CONSTEXPR value::kind value = value::date_tag;};
+{BOOST_STATIC_CONSTEXPR value::kind val = value::date_tag;};
 template<> struct to_kind<time>
-{BOOST_STATIC_CONSTEXPR value::kind value = value::time_tag;};
+{BOOST_STATIC_CONSTEXPR value::kind val = value::time_tag;};
 template<> struct to_kind<datetime>
-{BOOST_STATIC_CONSTEXPR value::kind value = value::datetime_tag;};
+{BOOST_STATIC_CONSTEXPR value::kind val = value::datetime_tag;};
 template<> struct to_kind<array>
-{BOOST_STATIC_CONSTEXPR value::kind value = value::array_tag;};
+{BOOST_STATIC_CONSTEXPR value::kind val = value::array_tag;};
 template<> struct to_kind<table>
-{BOOST_STATIC_CONSTEXPR value::kind value = value::table_tag;};
+{BOOST_STATIC_CONSTEXPR value::kind val = value::table_tag;};
 
 template<typename charT, typename traits>
 inline std::basic_ostream<charT, traits>&
