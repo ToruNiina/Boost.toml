@@ -237,18 +237,19 @@ parse_floating(const InputIterator first, const InputIterator last)
         {
             return result_t(std::numeric_limits<floating>::quiet_NaN(), iter);
         }
-        return result_t("toml::detail::parse_floating: "
-            "unknown keyword, maybe `nan`? ->" +
+        return result_t(
+            "toml::detail::parse_floating: unknown keyword, maybe `nan`? ->" +
             std::string(first, find_linebreak(first, last)), iter);
     }
     if(*iter == 'i')
     {
         if(++iter != last && *iter == 'n' && ++iter != last && *iter == 'f')
         {
-            return result_t(sign * std::numeric_limits<floating>::infinity(), iter);
+            return result_t(
+                    sign * std::numeric_limits<floating>::infinity(), iter);
         }
-        return result_t("toml::detail::parse_floating: "
-            "unknown keyword, maybe `inf`? ->" +
+        return result_t(
+            "toml::detail::parse_floating: unknown keyword, maybe `inf`? ->" +
             std::string(first, find_linebreak(first, last)), iter);
     }
 
