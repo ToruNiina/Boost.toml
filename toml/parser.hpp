@@ -133,6 +133,7 @@ parse_integer(const InputIterator first, const InputIterator last)
         }
     }
 
+    const char t = type;
     std::string token;
     bool underscore = true; // to avoid leading _
     for(; iter != last; ++iter)
@@ -150,8 +151,8 @@ parse_integer(const InputIterator first, const InputIterator last)
                 underscore = true;
             }
         }
-        else if((type == 'd' && isdec(n)) || (type == 'x' && ishex(n)) ||
-                (type == 'o' && isoct(n)) || (type == 'b' && isbin(n)))
+        else if((t == 'd' && isdec(n)) || (t == 'x' && ishex(n)) ||
+                (t == 'o' && isoct(n)) || (t == 'b' && isbin(n)))
         {
             token += *iter;
             underscore = false;
@@ -161,7 +162,7 @@ parse_integer(const InputIterator first, const InputIterator last)
             break;
         }
     }
-    switch(type)
+    switch(t)
     {
         case 'd':
         {
