@@ -215,6 +215,221 @@ parse_integer(const InputIterator first, const InputIterator last)
     }
 }
 
+template<typename InputIterator>
+result<floating, InputIterator>
+parse_floating(const InputIterator first, const InputIterator last)
+{
+    typedef result<floating, InputIterator> result_t;
+
+    floating sign = 1;
+    InputIterator iter = first;
+    if(*iter == '+') {++iter;} else if(*iter == '-') {++iter; sign = -1;}
+    if(iter == last)
+    {
+        return result_t("toml::detail::parse_integer: input is empty -> " +
+                std::string(first, find_linebreak(first, last)), iter);
+    }
+
+    // special values (nan, inf)
+    if(*iter == 'n')
+    {
+        if(++iter != last && *iter == 'a' && ++iter != last && *iter == 'n')
+        {
+            return result_t(std::numeric_limits<floating>::quiet_NaN(), iter);
+        }
+        return result_t("toml::detail::parse_floating: "
+            "unknown keyword, maybe `nan`? ->" +
+            std::string(first, find_linebreak(first, last)), iter);
+    }
+    if(*iter == 'i')
+    {
+        if(++iter != last && *iter == 'n' && ++iter != last && *iter == 'f')
+        {
+            return result_t(sign * std::numeric_limits<floating>::infinity(), iter);
+        }
+        return result_t("toml::detail::parse_floating: "
+            "unknown keyword, maybe `inf`? ->" +
+            std::string(first, find_linebreak(first, last)), iter);
+    }
+
+    std::string token;
+    bool underscore = true; // to avoid leading _
+    bool integer_part_started = false;
+    bool is_fractional_part   = false;
+    bool is_exponential_part  = false;
+    // integer part...
+    if(*iter == '0')
+    {
+        token += *iter;
+        ++iter;
+        if(iter == last)
+        {
+            return result_t("toml::detail::parse_floating: got `0`. "
+                    "it's not a floating point number, it's integer -> " +
+                    std::string(first, find_linebreak(first, last)), iter);
+        }
+        integer_part_started = true;
+    }
+    for(; iter != last; ++iter)
+    {
+        const char n = *iter;
+        if(n == '_')
+        {
+            if(underscore)
+            {
+                return result_t("toml::detail::parse_floating: "
+                    "`_` must be surrounded by at least one number -> " +
+                    std::string(first, find_linebreak(first, last)), iter);
+            }
+            else
+            {
+                underscore = true;
+            }
+        }
+        else if(isdec(n))
+        {
+            token += n;
+            underscore = false;
+            integer_part_started = true;
+        }
+        else if(n == '.')
+        {
+            if(!integer_part_started)
+            {
+                return result_t(
+                    "toml::detial::parse_floating: invalid `.` appeared -> " +
+                    std::string(first, find_linebreak(first, last)), iter);
+            }
+            is_fractional_part = true;
+            token += n;
+            ++iter;
+            break;
+        }
+        else if(n == 'e' || n == 'E')
+        {
+            if(!integer_part_started)
+            {
+                return result_t(
+                    "toml::detial::parse_floating: invalid `e|E` appeared -> " +
+                    std::string(first, find_linebreak(first, last)), iter);
+            }
+            is_exponential_part = true;
+            token += n;
+            ++iter;
+            break;
+        }
+        else
+        {
+            break;
+        }
+    }
+    if(is_fractional_part)
+    {
+        underscore = true; //to avoid leading 0 for fractional part (ex. 0._1)
+        bool fractional_part_has_size = false;
+        for(; iter != last; ++iter)
+        {
+            const char n = *iter;
+            if(n == '_')
+            {
+                if(underscore)
+                {
+                    return result_t("toml::detail::parse_floating: "
+                        "`_` must be surrounded by at least one number -> " +
+                        std::string(first, find_linebreak(first, last)), iter);
+                }
+                else
+                {
+                    underscore = true;
+                }
+            }
+            else if(isdec(n))
+            {
+                token += n;
+                underscore = false;
+                fractional_part_has_size = true;
+            }
+            else if(n == '.')
+            {
+                return result_t(
+                    "toml::detial::parse_floating: invalid `.` appeared -> " +
+                    std::string(first, find_linebreak(first, last)), iter);
+            }
+            else if(n == 'e' || n == 'E')
+            {
+                is_exponential_part = true;
+                token += n;
+                ++iter;
+                break;
+            }
+            else
+            {
+                if(!fractional_part_has_size)
+                {
+                    return result_t("toml::detial::parse_floating: "
+                        "fractional part must have size -> " +
+                        std::string(first, find_linebreak(first, last)), iter);
+
+                }
+                break;
+            }
+        }
+    }
+    if(is_exponential_part)
+    {
+        underscore = true; //to avoid leading 0 for fractional part (ex. 1e_10)
+        if(*iter == '+' || *iter == '-')
+        {
+            token += *iter;
+            ++iter;
+        }
+        for(; iter != last; ++iter)
+        {
+            const char n = *iter;
+            if(n == '_')
+            {
+                if(underscore)
+                {
+                    return result_t("toml::detail::parse_floating: "
+                        "`_` must be surrounded by at least one number -> " +
+                        std::string(first, find_linebreak(first, last)), iter);
+                }
+                else
+                {
+                    underscore = true;
+                }
+            }
+            else if(isdec(n))
+            {
+                token += n;
+                underscore = false;
+            }
+            else if(n == '.')
+            {
+                return result_t(
+                    "toml::detial::parse_floating: invalid `.` appeared -> " +
+                    std::string(first, find_linebreak(first, last)), iter);
+            }
+            else if(n == 'e' || n == 'E')
+            {
+                return result_t(
+                    "toml::detial::parse_floating: invalid `e|E` appeared -> " +
+                    std::string(first, find_linebreak(first, last)), iter);
+            }
+            else
+            {
+                break;
+            }
+        }
+    }
+    if(token.empty())
+    {
+        return result_t("toml::detail::parse_floating: input is empty -> " +
+                std::string(first, find_linebreak(first, last)), iter);
+    }
+    return result_t(sign * boost::lexical_cast<floating>(token), iter);
+}
+
 } // detail
 } // toml
 #endif// TOML98_PARSER_HPP
