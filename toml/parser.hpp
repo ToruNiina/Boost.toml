@@ -14,6 +14,7 @@ namespace detail
 template<typename InputIterator>
 InputIterator
 find_linebreak(const InputIterator first, const InputIterator last)
+    BOOST_NOEXCEPT_OR_NOTHROW
 {
     const InputIterator CR = std::find(first, last, '\r');
     if(CR != last)
@@ -110,6 +111,12 @@ parse_integer(const InputIterator first, const InputIterator last)
     integer sign = 1;
     InputIterator iter = first;
     if(*iter == '+') {++iter;} else if(*iter == '-') {++iter; sign = -1;}
+    if(iter == last)
+    {
+        return result_t("toml::detail::parse_integer: input is empty -> " +
+                std::string(first, find_linebreak(first, last)), iter);
+    }
+
     if(*iter == '0')
     {
         ++iter;
@@ -124,7 +131,7 @@ parse_integer(const InputIterator first, const InputIterator last)
         else if('0' <= n && n <= '9')
         {
             return result_t(
-                "toml::detail::parse_integer: leading 0 is not allowed: " +
+                "toml::detail::parse_integer: leading 0 is not allowed -> " +
                 std::string(first, find_linebreak(first, last)), iter);
         }
         else // just 0.
@@ -144,7 +151,8 @@ parse_integer(const InputIterator first, const InputIterator last)
             if(underscore)
             {
                 return result_t("toml::detail::parse_integer: "
-                    "`_` must be surrounded by at least one number.", iter);
+                    "`_` must be surrounded by at least one number -> " +
+                    std::string(first, find_linebreak(first, last)), iter);
             }
             else
             {
@@ -154,13 +162,18 @@ parse_integer(const InputIterator first, const InputIterator last)
         else if((t == 'd' && isdec(n)) || (t == 'x' && ishex(n)) ||
                 (t == 'o' && isoct(n)) || (t == 'b' && isbin(n)))
         {
-            token += *iter;
+            token += n;
             underscore = false;
         }
         else
         {
             break;
         }
+    }
+    if(token.empty())
+    {
+        return result_t("toml::detail::parse_integer: input is empty -> " +
+                std::string(first, find_linebreak(first, last)), iter);
     }
     switch(t)
     {
