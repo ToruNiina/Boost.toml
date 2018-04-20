@@ -3,6 +3,7 @@
 #include <toml/type_traits.hpp>
 #include <toml/value.hpp>
 #include <boost/format.hpp>
+
 namespace toml
 {
 
@@ -125,6 +126,35 @@ get(const toml::value& v)
     return std::make_pair(toml::get< first_type>(ar.at(0)),
                           toml::get<second_type>(ar.at(1)));
 }
+
+#ifdef TOML_HAS_CXX11_TUPLE
+namespace detail
+{
+
+template<typename Tuple, std::size_t ...I>
+Tuple get_tuple_impl(const toml::array& a, index_sequence<I...>)
+{
+    return std::make_tuple(
+        toml::get<typename std::tuple_element<I, Tuple>::type>(a.at(I))...);
+}
+
+} // detail
+
+// c++11 tuple
+template<typename Tuple>
+typename boost::enable_if<is_tuple_type<Tuple>, Tuple>::type
+get(const toml::value& v)
+{
+    constexpr std::size_t SZ = std::tuple_size<Tuple>::value;
+    toml::array const& ar = v.get<toml::array>();
+    if(ar.size() != SZ)
+    {
+        throw std::out_of_range((boost::format("toml::get<tuple>: "
+            "no enough size (%1% != %2%).") % ar.size() % SZ).str());
+    }
+    return detail::get_tuple_impl<Tuple>(ar, make_index_sequence<SZ>{});
+}
+#endif// TOML_HAS_CXX11_TUPLE
 
 } // toml
 #endif// TOML98_GET_HPP

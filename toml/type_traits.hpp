@@ -26,6 +26,11 @@
 #define TOML_HAS_CXX11_ARRAY
 #endif // BOOST_NO_CXX11_HDR_ARRAY
 
+#ifndef BOOST_NO_CXX11_HDR_TUPLE
+#include <tuple>
+#define TOML_HAS_CXX11_TUPLE
+#endif // BOOST_NO_CXX11_HDR_TUPLE
+
 namespace toml
 {
 
@@ -94,7 +99,7 @@ template<typename T> struct is_convertible<T, value>
         is_convertible<typename boost::remove_cv_ref<T>::type, table>
     >{};
 
-// is_array_like, is_map_like -----------------------------------------------
+// is_fixed_size_array, is_stirng_view_like ------------------------------------
 
 // (boost|std)::array have no ctor. toml::get should treat this in different way
 template<typename T> struct is_fixed_size_array : boost::false_type{};
@@ -112,9 +117,42 @@ template<> struct is_string_view_like<boost::string_ref>  : boost::true_type{};
 template<> struct is_string_view_like<std::string_view>   : boost::true_type{};
 #endif
 
+// is_pair/tuple_type ----------------------------------------------------------
+
 template<typename T> struct is_pair_type : boost::false_type {};
 template<typename T1, typename T2> struct is_pair_type<std::pair<T1, T2> >
 : boost::true_type {};
+
+#if defined(TOML_HAS_CXX11_TUPLE) && !defined(BOOST_NO_CXX11_VARIADIC_TEMPLATES)
+template<typename T> struct is_tuple_type : boost::false_type {};
+template<typename ... Ts>
+struct is_tuple_type<std::tuple<Ts...> > : boost::true_type {};
+
+template<std::size_t ... Ns> struct index_sequence{};
+
+template<typename IS, std::size_t N> struct push_back_index_sequence{};
+template<std::size_t N, std::size_t ... Ns>
+struct push_back_index_sequence<index_sequence<Ns...>, N>
+{
+    typedef index_sequence<Ns..., N> type;
+};
+
+template<std::size_t N>
+struct index_sequence_maker
+{
+    typedef typename push_back_index_sequence<
+        typename index_sequence_maker<N-1>::type, N>::type type;
+};
+template<>
+struct index_sequence_maker<0>
+{
+    typedef index_sequence<0> type;
+};
+template<std::size_t N>
+using make_index_sequence = typename index_sequence_maker<N-1>::type;
+#endif
+
+// is_array_like, is_map_like -----------------------------------------------
 
 BOOST_TTI_HAS_TYPE(iterator)    // has_type_iterator
 BOOST_TTI_HAS_TYPE(value_type)  // has_type_value_type
