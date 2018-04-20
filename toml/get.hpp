@@ -81,10 +81,10 @@ get(const toml::value& v)
     toml::array const& ar = v.get<toml::array>();
     Array retval;
 
-    if(ar.size() > retval.size())
+    if(ar.size() != retval.size())
     {
         throw std::out_of_range((boost::format("toml::get<fixed-sized-array>: "
-            "no enough size (%1% > %2%).") % ar.size() % retval.size()).str());
+            "no enough size (%1% != %2%).") % ar.size() % retval.size()).str());
     }
 
     typename Array::iterator out(retval.begin());
