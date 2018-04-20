@@ -109,5 +109,22 @@ get(const toml::value& v)
     return retval;
 }
 
+// pair
+template<typename Pair>
+typename boost::enable_if<is_pair_type<Pair>, Pair>::type
+get(const toml::value& v)
+{
+    typedef typename detail::first_type_of<Pair>::type  first_type;
+    typedef typename detail::second_type_of<Pair>::type second_type;
+    toml::array const& ar = v.get<toml::array>();
+    if(ar.size() != 2)
+    {
+        throw std::out_of_range((boost::format("toml::get<pair<T1, T2>>: "
+            "no enough size (%1% != 2).") % ar.size()).str());
+    }
+    return std::make_pair(toml::get< first_type>(ar.at(0)),
+                          toml::get<second_type>(ar.at(1)));
+}
+
 } // toml
 #endif// TOML98_GET_HPP

@@ -112,6 +112,10 @@ template<> struct is_string_view_like<boost::string_ref>  : boost::true_type{};
 template<> struct is_string_view_like<std::string_view>   : boost::true_type{};
 #endif
 
+template<typename T> struct is_pair_type : boost::false_type {};
+template<typename T1, typename T2> struct is_pair_type<std::pair<T1, T2> >
+: boost::true_type {};
+
 BOOST_TTI_HAS_TYPE(iterator)    // has_type_iterator
 BOOST_TTI_HAS_TYPE(value_type)  // has_type_value_type
 BOOST_TTI_HAS_TYPE(key_type)    // has_type_key_type
