@@ -2,6 +2,7 @@
 #define TOML98_PARSER_HPP
 #include <toml/result.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/static_assert.hpp>
 #include <istream>
 #include <fstream>
 
@@ -16,6 +17,8 @@ InputIterator
 find_linebreak(const InputIterator first, const InputIterator last)
     BOOST_NOEXCEPT_OR_NOTHROW
 {
+    BOOST_STATIC_ASSERT(boost::is_same<
+            typename boost::iterator_value<InputIterator>::type, char>::value);
     const InputIterator CR = std::find(first, last, '\r');
     if(CR != last)
     {
@@ -57,6 +60,8 @@ template<typename InputIterator>
 result<boolean, InputIterator>
 parse_boolean(const InputIterator first, const InputIterator last)
 {
+    BOOST_STATIC_ASSERT(boost::is_same<
+            typename boost::iterator_value<InputIterator>::type, char>::value);
     typedef result<boolean, InputIterator> result_t;
 
     if(first == last)
@@ -105,6 +110,8 @@ template<typename InputIterator>
 result<integer, InputIterator>
 parse_integer(const InputIterator first, const InputIterator last)
 {
+    BOOST_STATIC_ASSERT(boost::is_same<
+            typename boost::iterator_value<InputIterator>::type, char>::value);
     typedef result<integer, InputIterator> result_t;
     char type = 'd'; // d, x, o, b for dec, hex, oct, bin, respectively.
 
@@ -219,6 +226,8 @@ template<typename InputIterator>
 result<floating, InputIterator>
 parse_floating(const InputIterator first, const InputIterator last)
 {
+    BOOST_STATIC_ASSERT(boost::is_same<
+            typename boost::iterator_value<InputIterator>::type, char>::value);
     typedef result<floating, InputIterator> result_t;
 
     floating sign = 1;
