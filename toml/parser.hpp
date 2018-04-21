@@ -3,6 +3,7 @@
 #include <toml/result.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/static_assert.hpp>
+#include <stdexcept>
 #include <istream>
 #include <sstream>
 #include <fstream>
@@ -36,6 +37,16 @@ find_linebreak(const InputIterator first, const InputIterator last)
     return std::find(first, last, '\n');
 }
 
+template<typename Iterator, typename Predicate>
+bool all_of(const Iterator first, const Iterator last, Predicate pred)
+{
+    for(Iterator iter = first; iter != last; ++iter)
+    {
+        if(!pred(*iter)){return false;}
+    }
+    return true;
+}
+
 inline bool ishex(const char c) BOOST_NOEXCEPT_OR_NOTHROW
 {
     return ('0' <= c && c <= '9') ||
@@ -52,6 +63,118 @@ inline bool isoct(const char c) BOOST_NOEXCEPT_OR_NOTHROW
 inline bool isbin(const char c) BOOST_NOEXCEPT_OR_NOTHROW
 {
     return ('0' == c || c == '1');
+}
+
+inline std::string read_utf8_codepoint(const std::string& str)
+{
+    boost::uint_least32_t codepoint;
+    std::istringstream iss(str);
+    iss >> std::hex >> codepoint;
+
+    std::string character;
+    if(codepoint < 0x80)
+    {
+        character += static_cast<unsigned char>(codepoint);
+    }
+    else if(codepoint < 0x800)
+    {
+        character += static_cast<unsigned char>(0xC0| codepoint >> 6);
+        character += static_cast<unsigned char>(0x80|(codepoint & 0x3F));
+    }
+    else if(codepoint < 0x10000)
+    {
+        character += static_cast<unsigned char>(0xE0| codepoint >> 12);
+        character += static_cast<unsigned char>(0x80|(codepoint >> 6 & 0x3F));
+        character += static_cast<unsigned char>(0x80|(codepoint      & 0x3F));
+    }
+    else
+    {
+        character += static_cast<unsigned char>(0xF0| codepoint >> 18);
+        character += static_cast<unsigned char>(0x80|(codepoint >> 12 & 0x3F));
+        character += static_cast<unsigned char>(0x80|(codepoint >> 6  & 0x3F));
+        character += static_cast<unsigned char>(0x80|(codepoint       & 0x3F));
+    }
+    return character;
+}
+
+// XXX: this funciton is used in the loop to parse string.
+//      So, unlike the other parse_* functions, it returns an iterator that
+//      points the last element of the escape_sequence for ease.
+template<typename InputIterator>
+result<string, InputIterator>
+parse_escape_sequence(const InputIterator first, const InputIterator last)
+{
+    // literal tag does not have any escape sequence. the result is basic_string
+    typedef result<string, InputIterator> result_t;
+
+    InputIterator iter = first;
+    if(iter == last || *iter != '\\')
+    {
+        throw std::invalid_argument(
+                "toml::detail::unescape: got empty or invalid string");
+    }
+    ++iter; // this is for backslash.
+
+    switch(*iter)
+    {
+        case '\\': return result_t(string("\\", basic_string), iter);
+        case '"' : return result_t(string("\"", basic_string), iter);
+        case 'b' : return result_t(string("\b", basic_string), iter);
+        case 't' : return result_t(string("\t", basic_string), iter);
+        case 'n' : return result_t(string("\n", basic_string), iter);
+        case 'f' : return result_t(string("\f", basic_string), iter);
+        case 'r' : return result_t(string("\r", basic_string), iter);
+        case 'u' :
+        {
+            if(std::distance(iter, last) < 5)
+            {
+                return result_t("toml::detail::parse_escape_sequence: "
+                    "\\uXXXX must have 4 numbers -> " +
+                    std::string(first, find_linebreak(first, last)), iter);
+            }
+
+            InputIterator cp_begin = iter; std::advance(cp_begin, 1);
+            InputIterator cp_end   = iter; std::advance(cp_end,   5);
+            if(!all_of(cp_begin, cp_end, ishex))
+            {
+                return result_t("toml::detail::parse_escape_sequence: "
+                    "\\uXXXX must be represented by hex -> " +
+                    std::string(first, find_linebreak(first, last)), iter);
+            }
+
+            const std::string unescaped =
+                read_utf8_codepoint(std::string(cp_begin, cp_end));
+            return result_t(string(unescaped, basic_string), cp_end);
+        }
+        case 'U':
+        {
+            if(std::distance(iter, last) < 9)
+            {
+                return result_t("toml::detail::parse_escape_sequence: "
+                    "\\UXXXXXXXX must have 8 numbers -> " +
+                    std::string(first, find_linebreak(first, last)), iter);
+            }
+
+            InputIterator cp_begin = iter; std::advance(cp_begin, 1);
+            InputIterator cp_end   = iter; std::advance(cp_end,   9);
+            if(!all_of(cp_begin, cp_end, ishex))
+            {
+                return result_t("toml::detail::parse_escape_sequence: "
+                    "\\UXXXXXXXX must be represented by hex -> " +
+                    std::string(first, find_linebreak(first, last)), iter);
+            }
+
+            const std::string unescaped =
+                read_utf8_codepoint(std::string(cp_begin, cp_end));
+            return result_t(string(unescaped, basic_string), cp_end);
+        }
+        default:
+        {
+            return result_t("toml::detail::parse_escape_sequence: "
+                "unknown escape sequence appeared. -> " +
+                std::string(first, find_linebreak(first, last)), iter);
+        }
+    }
 }
 
 // returns iterator that points next of the value
