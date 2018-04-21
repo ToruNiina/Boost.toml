@@ -1,9 +1,10 @@
-#ifndef TOML98_PARSER_HPP
-#define TOML98_PARSER_HPP
+#ifndef TOML_PARSER_HPP
+#define TOML_PARSER_HPP
 #include <toml/result.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/static_assert.hpp>
 #include <istream>
+#include <sstream>
 #include <fstream>
 
 namespace toml
@@ -442,4 +443,4 @@ parse_floating(const InputIterator first, const InputIterator last)
 
 } // detail
 } // toml
-#endif// TOML98_PARSER_HPP
+#endif// TOML_PARSER_HPP
