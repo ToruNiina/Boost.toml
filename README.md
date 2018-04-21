@@ -101,23 +101,19 @@ What is the corresponding C++ type? In that case, `toml::array` or
 `boost::container::vector<toml::value>`.
 
 ```cpp
-{
-    toml::array a = toml::get<toml::array>(v);
+toml::array a = toml::get<toml::array>(v);
 
-    std::vector<int>    a1 = toml::get<std::vector<int>        >(a.at(0));
-    std::vector<string> a2 = toml::get<std::vector<std::string>>(a.at(1));
-}
+std::vector<int>    a1 = toml::get<std::vector<int>        >(a.at(0));
+std::vector<string> a2 = toml::get<std::vector<std::string>>(a.at(1));
 ```
 
 You also can get this as `std::vector<toml::array>`.
 
 ```cpp
-{
-    std::vector<toml::array> a = toml::get<std::vector<toml::array>>(v);
+std::vector<toml::array> a = toml::get<std::vector<toml::array>>(v);
 
-    int         a1 = toml::get<int        >(a.at(0).at(0)); // 1
-    std::string a2 = toml::get<std::string>(a.at(1).at(0)); // "foo"
-}
+int         a1 = toml::get<int        >(a.at(0).at(0)); // 1
+std::string a2 = toml::get<std::string>(a.at(1).at(0)); // "foo"
 ```
 
 ## formatting toml values
@@ -126,7 +122,8 @@ TODO
 
 ## underlying types
 
-`toml::value` is based on a `boost::variant` that contains following toml value types.
+`toml::value` is based on a `boost::variant` that contains following toml value
+types.
 
 | toml value type | boost.toml type                                         |
 |:----------------|:--------------------------------------------------------|
@@ -144,8 +141,8 @@ TODO
 ### `toml::string` and `basic`, `literal` flags
 
 `toml::string` has an `enum` to represent `basic_string` and `literal_string`.
-But `toml::get` supports getting lvalue reference that points `std::string`
-contained in `toml::string`, so user may feel it is just a 
+But it can be converted to std::string automatically, so the users do not need
+to consider about the difference between `toml::string` and `std::string`.
 
 ### map class that represents `toml::table`
 
