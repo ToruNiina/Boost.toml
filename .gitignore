@@ -30,3 +30,9 @@
 *.exe
 *.out
 *.app
+
+build/*
+build98/*
+build11/*
+build14/*
+build17/*
