@@ -164,6 +164,7 @@ BOOST_TTI_HAS_TYPE(key_type)    // has_type_key_type
 BOOST_TTI_HAS_TYPE(mapped_type) // has_type_mapped_type
 
 template<typename T> struct is_array_like : boost::mpl::and_<
+        boost::mpl::not_<boost::is_same<T, std::string> >,
         boost::mpl::not_<is_toml_type<T> >,        // is not an exact toml type
         boost::mpl::not_<is_string_view_like<T> >, // is not a string_view type
         boost::mpl::not_<is_fixed_size_array<T> >, // is not an array type
