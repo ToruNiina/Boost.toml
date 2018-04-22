@@ -9,7 +9,8 @@ Boost.toml is a header-only toml parser depends on Boost.
 - [getting toml values](#getting-toml-values)
     - [basic usage of `toml::get`](#basic-usage-of-tomlget)
     - [getting `toml::array`](#getting-tomlarray)
-    - [performance of getting `toml::array`](#performance-of-getting-tomlarray)
+    - [getting `toml::table`](#getting-tomltable)
+    - [performance of getting `toml::array` or `toml::table`](#performance-of-getting-tomlarray-or-tomltable)
     - [`toml::array` of `toml::array` having different types each other](#tomlarray-of-tomlarray-having-different-types-each-other)
 - [formatting toml values](#formatting-toml-values)
 - [underlying types](#underlying-types)
@@ -48,6 +49,9 @@ toml::value v(42);
 toml::integer& i = toml::get<toml::integer>(v);
 i = 6 * 9;
 std::cout << toml::get<toml::integer>(v) << std::endl; // 54
+
+toml::value t{{"int", 42}, {"float", 3.14}, {"str", "foo"}};
+toml::table const& table = toml::get<toml::table>(t);
 ```
 
 If you pass a different type to `toml::get`'s template argument, it casts the
@@ -76,7 +80,20 @@ toml::value v{1,2,3,4};
 std::tuple<int, int, int, int> t = toml::get<std::tuple<int, int, int, int>>(v);
 ```
 
-### performance of getting `toml::array`
+### getting `toml::table`
+
+You can get also `toml::table` as your favorite map type.
+
+```cpp
+toml::value v{{"int", 42}, {"float", 3.14}, {"str", "foo"}};
+
+auto std_map  = toml::get<std::map<toml::key, toml::value>              >(v);
+auto std_umap = toml::get<std::unordered_map<toml::key, toml::value>    >(v);
+auto bst_map  = toml::get<boost::container::map<toml::key, toml::value> >(v);
+auto bst_umap = toml::get<boost::unordered_map<toml::key, toml::value>  >(v);
+```
+
+### performance of getting `toml::array` or `toml::table`
 
 Because `toml::get` does type-casting when you pass your favorite container to
 `toml::get`, it essentially do the same thing as following.
@@ -92,16 +109,27 @@ std::vector<int> get_int_vec(const toml::value& v)
 }
 ```
 
-If the array has many many elements, it will take time.
-Sometimes it become intolerable. In that case, you can get `toml::array` as
-just a `(const) toml::array&`.
+In `toml::table` case, like following.
+
+```cpp
+std::map<toml::key, toml::value> get_std_map(const toml::value& v)
+{
+    const toml::table& tb = v.get<toml::table>();
+
+    // it does not need extra toml::get, so it's simpler than array.
+    return std::map<toml::key, toml::value>(tb.begin(), tb.end());
+}
+```
+
+If the array or table has many many elements, it will take time because it
+essentially constructs completely new array or table.
+Sometimes it become intolerable. In that case, you can get them as
+just a (const) reference.
 
 ```cpp
 toml::value  v{1,2,3,4,5};
 toml::array& ar = toml::get<toml::array>(v);
 ```
-
-This is just the same as `boost::get` for `boost::variant`.
 
 ### `toml::array` of `toml::array` having different types each other
 
