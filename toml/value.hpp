@@ -92,6 +92,11 @@ struct value
     value(const T& v, typename boost::enable_if<is_convertible<T, datetime>
             >::type* = 0): storage_(static_cast<datetime>(v))
     {}
+    template<typename T1, typename T2>
+    value(const T1& d, const T2& t, typename boost::enable_if<boost::mpl::and_<
+            is_convertible<T1, date>, is_convertible<T2, time>
+            > >::type* = 0): storage_(datetime(d, t))
+    {}
 
     value(const array& v): storage_(v){}
     value(const table& v): storage_(v){}
