@@ -13,6 +13,7 @@ Boost.toml is a header-only toml parser depends on Boost.
     - [performance of getting `toml::array` or `toml::table`](#performance-of-getting-tomlarray-or-tomltable)
     - [`toml::array` of `toml::array` having different types each other](#tomlarray-of-tomlarray-having-different-types-each-other)
 - [formatting toml values](#formatting-toml-values)
+- [datetime operation](#datetime-operation)
 - [underlying types](#underlying-types)
     - [`toml::string` and `basic`, `literal` flags](#tomlstring-and-basic-literal-flags)
     - [map class that represents `toml::table`](#map-class-that-represents-tomltable)
@@ -162,6 +163,27 @@ std::string a2 = toml::get<std::string>(a.at(1).at(0)); // "foo"
 ## formatting toml values
 
 TODO
+
+## datetime operation
+
+Depending on Boost.Date\_Time, Boost.toml supports datetime operation.
+You can just get `boost::posix_time::ptime` from `toml::datetime`,
+so you can operate `datetime` in the following way.
+
+```cpp
+toml::value v;
+boost::posix_time::ptime dt = toml::get<boost::posix_time::ptime>(v);
+```
+
+And just for ease, Boost.toml imports some classes and enums.
+You can construct your `toml::datetime` value in the same way as
+Boost.Date\_Time.
+
+```cpp
+toml::value d(toml::date(2018, toml::Apr, 1));
+toml::value t(toml::hours(1) + toml::minutes(3) + toml::seconds(10));
+toml::value dt(d, t);
+```
 
 ## underlying types
 
