@@ -243,13 +243,13 @@ template<typename T>
 inline typename boost::enable_if<is_toml_type<T>, T>::type&
 get(value& v)
 {
-    return v.get<T>();
+    return v.template get<T>();
 }
 template<typename T>
 inline typename boost::enable_if<is_toml_type<T>, T>::type const&
 get(value const& v)
 {
-    return v.get<T>();
+    return v.template get<T>();
 }
 
 template<typename Visitor>
