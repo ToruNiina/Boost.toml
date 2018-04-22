@@ -64,7 +64,10 @@ using boost::posix_time::minutes;
 using boost::posix_time::seconds;
 using boost::posix_time::milliseconds;
 using boost::posix_time::microseconds;
-// using boost::posix_time::nanoseconds;
+
+#ifdef BOOST_DATE_TIME_HAS_NANOSECONDS
+using boost::posix_time::nanoseconds;
+#endif // BOOST_DATE_TIME_HAS_NANOSECONDS
 
 } // toml
 #endif// TOML_TYPES_HPP
