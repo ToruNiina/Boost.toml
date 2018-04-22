@@ -26,7 +26,87 @@ __NOTE__: This library is not a part of Boost C++ Library.
 
 ## example code
 
-TODO
+Here is an example toml file (a bit modified from original toml repository).
+
+```toml
+title = "TOML Example"
+
+[owner]
+name = "Tom Preston-Werner"
+dob = 1979-05-27T07:32:00-08:00
+
+[database]
+server = "192.168.1.1"
+ports = [ 8001, 8001, 8002 ]
+connection_max = 5000
+enabled = true
+
+# modified to explain how to get an array of table
+[[servers]]
+name = "alpha"
+ip = "10.0.0.1"
+dc = "eqdc10"
+
+[[servers]]
+name = "beta"
+ip = "10.0.0.2"
+dc = "eqdc10"
+
+[clients]
+data = [ ["gamma", "delta"], [1, 2] ]
+```
+
+You can read the file with the code below.
+
+```cpp
+// This library is header-only.
+// To use it, including this file is the only thing required.
+#include <toml/toml.hpp>
+
+int main()
+{
+    // reads toml file and return it as a map (toml::key -> toml::value).
+    const toml::table file = toml::parse("example.toml");
+
+    // you can get toml values by toml::get function.
+    const std::string title = toml::get<std::string>(file.at("title"));
+
+    // it returns lvalue reference if you specify exact toml::* types
+    const toml::table& owner = toml::get<toml::table   >(file.at("owner"));
+    const std::string  name  = toml::get<std::string   >(owner.at("name"));
+    const toml::datetime dob = toml::get<toml::datetime>(owner.at("dob"));
+
+    const auto& database = toml::get<toml::table>(file.at("database"));
+    // you can use std::string_view if you have c++17 compiler.
+    const auto  server = toml::get<std::string_view>(database.at("server"));
+    // you can get toml::array as your favorite container type.
+    const auto  ports = toml::get<std::vector<int>>(database.at("ports"));
+    // you can cast types if they are convertible (and not ambiguous)
+    const auto  connection_max = toml::get<std::size_t>(database.at("connection_max"));
+    const auto  enabled = toml::get<bool>(database.at("enabled"));
+
+    // array of table is just an `array<table>`.
+    const auto servers  = toml::get<std::vector<toml::table>>(file.at("servers"));
+
+    // you can use boost::string_view if you don't have c++17 compatible compiler
+    const auto name_alpha = toml::get<boost::string_view>(servers.at(0).at("name"));
+    const auto ip_alpha   = toml::get<boost::string_view>(servers.at(0).at("ip"));
+    const auto dc_alpha   = toml::get<boost::string_view>(servers.at(0).at("dc"));
+    const auto name_beta  = toml::get<std::string>(servers.at(1).at("name"));
+    const auto ip_beta    = toml::get<std::string>(servers.at(1).at("ip"));
+    const auto dc_beta    = toml::get<std::string>(servers.at(1).at("dc"));
+
+    const auto& clients = toml::get<toml::table>(file.at("clients"));
+    // if you know the length of the array and type of the elements,
+    // you can do this!
+    const auto  data = toml::get<
+        std::pair<std::vector<std::string>, std::vector<int>>
+        >(clients.at("data"));
+    // the first array is array of string, the second one is array of int.
+
+    return 0;
+}
+```
 
 ## confirming value type
 
@@ -101,10 +181,10 @@ You can get `toml::array` as your favorite array type.
 
 ```cpp
 toml::value v{1, 2, 3, 4, 5};
-std::vector<int>        vec = toml::get<std::vector<int>>(v);
-std::deque<unsigned>    deq = toml::get<std::deque<unsigned>>(v);
+std::vector<int>        vec = toml::get<std::vector<int>       >(v);
+std::deque<unsigned>    deq = toml::get<std::deque<unsigned>   >(v);
 std::list<std::int64_t> lst = toml::get<std::list<std::int64_t>>(v);
-std::array<char, 5>     ary = toml::get<std::array<char, 5>>(v);
+std::array<char, 5>     ary = toml::get<std::array<char, 5>    >(v);
 ```
 
 Surprisingly, you can also get a `std::pair` or `std::tuple` type
@@ -148,7 +228,7 @@ In most cases, the conversion is not needed.
 Consider that you have this toml file.
 
 ```toml
-array = [[1,2,3], ["foo", "bar", "baz"]]
+array = [[1, 2, 3], ["foo", "bar", "baz"]]
 ```
 
 What is the corresponding C++ type? If you completely know about the type of
