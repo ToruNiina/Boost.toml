@@ -3,15 +3,19 @@ Boost.toml
 
 Boost.toml is a header-only toml parser depends on Boost.
 
+__NOTE__: This library is not a part of Boost C++ Library.
+
 ## Table of Contents
 
 - [example code](#example-code)
+- [confirming value type](#confirming-value-type)
 - [getting toml values](#getting-toml-values)
     - [basic usage of `toml::get`](#basic-usage-of-tomlget)
     - [getting `toml::array`](#getting-tomlarray)
     - [getting `toml::table`](#getting-tomltable)
     - [performance of getting `toml::array` or `toml::table`](#performance-of-getting-tomlarray-or-tomltable)
     - [`toml::array` of `toml::array` having different types each other](#tomlarray-of-tomlarray-having-different-types-each-other)
+- [visiting value that has unknown type](#visiting-value-that-has-unknown-type).
 - [formatting toml values](#formatting-toml-values)
 - [datetime operation](#datetime-operation)
 - [underlying types](#underlying-types)
@@ -24,7 +28,38 @@ Boost.toml is a header-only toml parser depends on Boost.
 
 TODO
 
+## confirming value type
+
+If you don't know actually what type is contained in the data, you can get
+type information as `enum`.
+
+```cpp
+toml::table data = toml::parse("sample.toml");
+toml::value const& v = data["some_value"]; // what type does it have ???
+
+std::cout << v.which() << std::endl; // outputs "integer" or something like that
+
+switch(v.which())
+{
+    case toml::value::integer_tag  : /* do some stuff */; break;
+    case toml::value::string_tag   : /* do some stuff */; break;
+    // ...
+}
+```
+
+`toml::value` also has `is()` member function that checks the type.
+
+```cpp
+if(v.is(toml::value::string_tag)) {/* do some stuff */}
+```
+
+But it is painful to switch every time.
+Boost.toml provides a way to visit contained value without knowing its value.
+See also [visiting value that has unknown type](#visiting-value-that-has-unknown-type).
+
 ## getting toml values
+
+Boost.toml provides really powerful function to get a value from TOML data.
 
 ### basic usage of `toml::get`
 
@@ -171,6 +206,20 @@ int         a1 = toml::get<int        >(a.at(0).at(0)); // 1
 std::string a2 = toml::get<std::string>(a.at(1).at(0)); // "foo"
 ```
 
+## visiting value that has unknown type
+
+Boost.toml provides `toml::apply_visitor` function to visit contained value
+without knowing its type.
+
+```cpp
+toml::table data = toml::parse("sample.toml");
+const auto twice = toml::apply_visitor(
+    [](const auto& val) {return val + val}, data["number"]);
+```
+
+The usage is similar to `boost::apply_visitor` and `boost::variant`, bacause
+it depends on it.
+
 ## formatting toml values
 
 TODO
@@ -219,6 +268,17 @@ types.
 `toml::string` has an `enum` to represent `basic_string` and `literal_string`.
 But it can be converted to std::string automatically, so the users do not need
 to consider about the difference between `toml::string` and `std::string`.
+
+The enum value or tag class can be passed to make `toml::value` that contains
+`toml::string`. It affects on the output format. By default, `basic_string` is
+chosen.
+
+```
+toml::value v1("foo", toml::string::basic);
+toml::value v2("bar", toml::string::literal);
+toml::value v3("baz", toml::basic_string);
+toml::value v4("qax", toml::literal_string);
+```
 
 ### map class that represents `toml::table`
 
