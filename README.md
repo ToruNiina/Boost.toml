@@ -81,6 +81,8 @@ toml::value v{1,2,3,4};
 std::tuple<int, int, int, int> t = toml::get<std::tuple<int, int, int, int>>(v);
 ```
 
+currently, `boost::tuple` is not supported.
+
 ### getting `toml::table`
 
 You can get also `toml::table` as your favorite map type.
@@ -110,13 +112,12 @@ std::vector<int> get_int_vec(const toml::value& v)
 }
 ```
 
-In `toml::table` case, like following.
+getting `toml::table` is simpler than the case of `toml::array`.
 
 ```cpp
 std::map<toml::key, toml::value> get_std_map(const toml::value& v)
 {
     const toml::table& tb = v.get<toml::table>();
-
     // it does not need extra toml::get, so it's simpler than array.
     return std::map<toml::key, toml::value>(tb.begin(), tb.end());
 }
@@ -124,7 +125,8 @@ std::map<toml::key, toml::value> get_std_map(const toml::value& v)
 
 If the array or table has many many elements, it will take time because it
 essentially constructs completely new array or table.
-Sometimes it become intolerable. In that case, you can get them as
+
+Sometimes it is intolerable. In that case, you can get them as
 just a (const) reference.
 
 ```cpp
@@ -134,15 +136,24 @@ toml::array& ar = toml::get<toml::array>(v);
 
 ### `toml::array` of `toml::array` having different types each other
 
-Let us consider you have this toml file.
+Consider that you have this toml file.
 
 ```toml
 array = [[1,2,3], ["foo", "bar", "baz"]]
 ```
 
-What is the corresponding C++ type? In that case, `toml::array` or
-`std::vector<toml::value>` can be used. Actually, `toml::array` is a
-`boost::container::vector<toml::value>`.
+What is the corresponding C++ type? If you completely know about the type of
+array before reading it, you can use `std::pair` or `std::tuple`.
+
+```cpp
+auto pr  = toml::get<std::pair <std::vector<int>, std::vector<std::string>>>(v);
+auto tpl = toml::get<std::tuple<std::vector<int>, std::vector<std::string>>>(v);
+```
+
+But generally, you cannot know the length of array and the type of array element
+in toml file. In that case, `toml::array` or `std::vector<toml::value>`
+can be used (actually, `toml::array` is just a
+`boost::container::vector<toml::value>`).
 
 ```cpp
 toml::array a = toml::get<toml::array>(v);
