@@ -177,7 +177,7 @@ types.
 | `string`        | `struct {std::string str; enum {basic, literal} kind;}` |
 | `date`          | `boost::gregorian::date`                                |
 | `time`          | `boost::posix_time::time_duration`                      |
-| `datetime`      | `struct {date d; time t};`                              |
+| `datetime`      | `boost::posix_time::ptime`                              |
 | `array`         | `boost::container::vector<value>`                       |
 | `table`         | `boost::container::flat_map<key, value>`                |
 
