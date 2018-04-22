@@ -13,23 +13,27 @@
 #include <boost/array.hpp>
 #include <boost/utility/string_ref.hpp>
 #include <boost/utility/string_view.hpp>
-#ifdef __has_include
-#  if __has_include(<string_view>)
-#    include <string_view>
-#    define TOML_HAS_CXX17_STRING_VIEW
-#  endif // string view
-#endif // has_include
+
+#if __cplusplus >= 201703L
+#  ifdef __has_include
+#    if __has_include(<string_view>)
+#      include <string_view>
+#      define TOML_HAS_CXX17_STRING_VIEW
+#    endif // string view
+#  endif // has_include
+#endif // c++17
 
 // if defined, include will be skipped.
-#ifndef BOOST_NO_CXX11_HDR_ARRAY
-#include <array>
-#define TOML_HAS_CXX11_ARRAY
-#endif // BOOST_NO_CXX11_HDR_ARRAY
-
-#ifndef BOOST_NO_CXX11_HDR_TUPLE
-#include <tuple>
-#define TOML_HAS_CXX11_TUPLE
-#endif // BOOST_NO_CXX11_HDR_TUPLE
+#if __cplusplus >= 201103L
+#  ifndef BOOST_NO_CXX11_HDR_ARRAY
+#    include <array>
+#    define TOML_HAS_CXX11_ARRAY
+#  endif // BOOST_NO_CXX11_HDR_ARRAY
+#  ifndef BOOST_NO_CXX11_HDR_TUPLE
+#    include <tuple>
+#    define TOML_HAS_CXX11_TUPLE
+#  endif // BOOST_NO_CXX11_HDR_TUPLE
+#endif //c++11
 
 namespace toml
 {
@@ -123,7 +127,7 @@ template<typename T> struct is_pair_type : boost::false_type {};
 template<typename T1, typename T2> struct is_pair_type<std::pair<T1, T2> >
 : boost::true_type {};
 
-#if defined(TOML_HAS_CXX11_TUPLE) && !defined(BOOST_NO_CXX11_VARIADIC_TEMPLATES)
+#if defined(TOML_HAS_CXX11_TUPLE)
 template<typename T> struct is_tuple_type : boost::false_type {};
 template<typename ... Ts>
 struct is_tuple_type<std::tuple<Ts...> > : boost::true_type {};
