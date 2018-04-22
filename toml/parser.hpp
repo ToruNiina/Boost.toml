@@ -117,34 +117,36 @@ parse_escape_sequence(const InputIterator first, const InputIterator last)
 
     switch(*iter)
     {
-        case '\\': return result_t(string("\\", basic_string), iter);
-        case '"' : return result_t(string("\"", basic_string), iter);
-        case 'b' : return result_t(string("\b", basic_string), iter);
-        case 't' : return result_t(string("\t", basic_string), iter);
-        case 'n' : return result_t(string("\n", basic_string), iter);
-        case 'f' : return result_t(string("\f", basic_string), iter);
-        case 'r' : return result_t(string("\r", basic_string), iter);
+        case '\\': return result_t(string("\\", basic_string),iter,success_t());
+        case '"' : return result_t(string("\"", basic_string),iter,success_t());
+        case 'b' : return result_t(string("\b", basic_string),iter,success_t());
+        case 't' : return result_t(string("\t", basic_string),iter,success_t());
+        case 'n' : return result_t(string("\n", basic_string),iter,success_t());
+        case 'f' : return result_t(string("\f", basic_string),iter,success_t());
+        case 'r' : return result_t(string("\r", basic_string),iter,success_t());
         case 'u' :
         {
             if(std::distance(iter, last) < 5)
             {
                 return result_t("toml::detail::parse_escape_sequence: "
                     "\\uXXXX must have 4 numbers -> " +
-                    std::string(first, find_linebreak(first, last)), iter);
+                    std::string(first, find_linebreak(first, last)),
+                    iter, failure_t());
             }
 
             InputIterator cp_begin = iter; std::advance(cp_begin, 1);
             InputIterator cp_end   = iter; std::advance(cp_end,   5);
-            if(!all_of(cp_begin, cp_end, ishex))
+            if(!::toml::detail::all_of(cp_begin, cp_end, ishex))
             {
                 return result_t("toml::detail::parse_escape_sequence: "
                     "\\uXXXX must be represented by hex -> " +
-                    std::string(first, find_linebreak(first, last)), iter);
+                    std::string(first, find_linebreak(first, last)),
+                    iter, failure_t());
             }
 
-            const std::string unescaped =
+            const std::string unesc =
                 read_utf8_codepoint(std::string(cp_begin, cp_end));
-            return result_t(string(unescaped, basic_string), cp_end);
+            return result_t(string(unesc, basic_string), cp_end, success_t());
         }
         case 'U':
         {
@@ -152,27 +154,30 @@ parse_escape_sequence(const InputIterator first, const InputIterator last)
             {
                 return result_t("toml::detail::parse_escape_sequence: "
                     "\\UXXXXXXXX must have 8 numbers -> " +
-                    std::string(first, find_linebreak(first, last)), iter);
+                    std::string(first, find_linebreak(first, last)),
+                    iter, failure_t());
             }
 
             InputIterator cp_begin = iter; std::advance(cp_begin, 1);
             InputIterator cp_end   = iter; std::advance(cp_end,   9);
-            if(!all_of(cp_begin, cp_end, ishex))
+            if(!::toml::detail::all_of(cp_begin, cp_end, ishex))
             {
                 return result_t("toml::detail::parse_escape_sequence: "
                     "\\UXXXXXXXX must be represented by hex -> " +
-                    std::string(first, find_linebreak(first, last)), iter);
+                    std::string(first, find_linebreak(first, last)),
+                    iter, failure_t());
             }
 
-            const std::string unescaped =
+            const std::string unesc =
                 read_utf8_codepoint(std::string(cp_begin, cp_end));
-            return result_t(string(unescaped, basic_string), cp_end);
+            return result_t(string(unesc, basic_string), cp_end, success_t());
         }
         default:
         {
             return result_t("toml::detail::parse_escape_sequence: "
                 "unknown escape sequence appeared. -> " +
-                std::string(first, find_linebreak(first, last)), iter);
+                std::string(first, find_linebreak(first, last)),
+                iter, failure_t());
         }
     }
 }
@@ -191,7 +196,8 @@ parse_boolean(const InputIterator first, const InputIterator last)
     if(first == last)
     {
         return result_t(std::string(
-            "toml::detail::parse_boolean: input is empty."), first);
+            "toml::detail::parse_boolean: input is empty."),
+            first, failure_t());
     }
 
     InputIterator iter = first;
@@ -201,11 +207,11 @@ parse_boolean(const InputIterator first, const InputIterator last)
            ++iter != last && *iter == 'u' &&
            ++iter != last && *iter == 'e')
         {
-            return result_t(true, ++iter);
+            return result_t(true, ++iter, success_t());
         }
         return result_t("toml::detail::parse_boolean: boolean keywords are "
             "`true` or `false` -> " +
-            std::string(first, find_linebreak(first, last)), iter);
+            std::string(first, find_linebreak(first, last)), iter, failure_t());
     }
     else if(*iter == 'f')
     {
@@ -214,20 +220,20 @@ parse_boolean(const InputIterator first, const InputIterator last)
            ++iter != last && *iter == 's' &&
            ++iter != last && *iter == 'e')
         {
-            return result_t(false, ++iter);
+            return result_t(false, ++iter, success_t());
         }
         return result_t("toml::detail::parse_boolean: boolean keywords are "
             "`true` or `false` -> " +
-            std::string(first, find_linebreak(first, last)), iter);
+            std::string(first, find_linebreak(first, last)), iter, failure_t());
     }
     else if(*iter == 'T' || *iter == 'F')
     {
         return result_t("toml::detail::parse_boolean: boolean keywords are "
             "`true` or `false` -> " +
-            std::string(first, find_linebreak(first, last)), iter);
+            std::string(first, find_linebreak(first, last)), iter, failure_t());
     }
     return result_t(std::string(
-        "toml::detail::parse_boolean: failed. try next"), first);
+        "toml::detail::parse_boolean: failed. try next"), first, failure_t());
 }
 
 template<typename InputIterator>
@@ -245,13 +251,13 @@ parse_integer(const InputIterator first, const InputIterator last)
     if(iter == last)
     {
         return result_t("toml::detail::parse_integer: input is empty -> " +
-                std::string(first, find_linebreak(first, last)), iter);
+            std::string(first, find_linebreak(first, last)), iter, failure_t());
     }
 
     if(*iter == '0')
     {
         ++iter;
-        if(iter == last) {return result_t(0, iter);}
+        if(iter == last) {return result_t(0, iter, success_t());}
 
         const char n = *iter;
         if(n == 'x' || n == 'o' || n == 'b')
@@ -263,11 +269,12 @@ parse_integer(const InputIterator first, const InputIterator last)
         {
             return result_t(
                 "toml::detail::parse_integer: leading 0 is not allowed -> " +
-                std::string(first, find_linebreak(first, last)), iter);
+                std::string(first, find_linebreak(first, last)),
+                iter, failure_t());
         }
         else // just 0.
         {
-            return result_t(0, iter);
+            return result_t(0, iter, success_t());
         }
     }
 
@@ -283,7 +290,8 @@ parse_integer(const InputIterator first, const InputIterator last)
             {
                 return result_t("toml::detail::parse_integer: "
                     "`_` must be surrounded by at least one number -> " +
-                    std::string(first, find_linebreak(first, last)), iter);
+                    std::string(first, find_linebreak(first, last)),
+                    iter, failure_t());
             }
             else
             {
@@ -304,27 +312,28 @@ parse_integer(const InputIterator first, const InputIterator last)
     if(token.empty())
     {
         return result_t("toml::detail::parse_integer: input is empty -> " +
-                std::string(first, find_linebreak(first, last)), iter);
+            std::string(first, find_linebreak(first, last)), iter, failure_t());
     }
     switch(t)
     {
         case 'd':
         {
-            return result_t(sign * boost::lexical_cast<integer>(token), iter);
+            return result_t(sign * boost::lexical_cast<integer>(token),
+                    iter, success_t());
         }
         case 'x':
         {
             integer i;
             std::stringstream iss(token);
             iss >> std::hex >> i;
-            return result_t(sign * i, iter);
+            return result_t(sign * i, iter, success_t());
         }
         case 'o':
         {
             integer i;
             std::stringstream iss(token);
             iss >> std::oct >> i;
-            return result_t(sign * i, iter);
+            return result_t(sign * i, iter, success_t());
         }
         case 'b':
         {
@@ -336,7 +345,7 @@ parse_integer(const InputIterator first, const InputIterator last)
                 if(*i == '1') {ret += base;}
                 base *= 2;
             }
-            return result_t(sign * ret, iter);
+            return result_t(sign * ret, iter, success_t());
         }
         default:
         {
@@ -360,7 +369,7 @@ parse_floating(const InputIterator first, const InputIterator last)
     if(iter == last)
     {
         return result_t("toml::detail::parse_integer: input is empty -> " +
-                std::string(first, find_linebreak(first, last)), iter);
+            std::string(first, find_linebreak(first, last)), iter, failure_t());
     }
 
     // special values (nan, inf)
@@ -368,22 +377,24 @@ parse_floating(const InputIterator first, const InputIterator last)
     {
         if(++iter != last && *iter == 'a' && ++iter != last && *iter == 'n')
         {
-            return result_t(std::numeric_limits<floating>::quiet_NaN(), iter);
+            return result_t(std::numeric_limits<floating>::quiet_NaN(),
+                    iter, success_t());
         }
         return result_t(
             "toml::detail::parse_floating: unknown keyword, maybe `nan`? ->" +
-            std::string(first, find_linebreak(first, last)), iter);
+            std::string(first, find_linebreak(first, last)), iter, failure_t());
     }
     if(*iter == 'i')
     {
         if(++iter != last && *iter == 'n' && ++iter != last && *iter == 'f')
         {
             return result_t(
-                    sign * std::numeric_limits<floating>::infinity(), iter);
+                sign * std::numeric_limits<floating>::infinity(),
+                iter, success_t());
         }
         return result_t(
             "toml::detail::parse_floating: unknown keyword, maybe `inf`? ->" +
-            std::string(first, find_linebreak(first, last)), iter);
+            std::string(first, find_linebreak(first, last)), iter, failure_t());
     }
 
     std::string token;
@@ -399,8 +410,9 @@ parse_floating(const InputIterator first, const InputIterator last)
         if(iter == last)
         {
             return result_t("toml::detail::parse_floating: got `0`. "
-                    "it's not a floating point number, it's integer -> " +
-                    std::string(first, find_linebreak(first, last)), iter);
+                "it's not a floating point number, it's integer -> " +
+                std::string(first, find_linebreak(first, last)),
+                iter, failure_t());
         }
         integer_part_started = true;
     }
@@ -413,7 +425,8 @@ parse_floating(const InputIterator first, const InputIterator last)
             {
                 return result_t("toml::detail::parse_floating: "
                     "`_` must be surrounded by at least one number -> " +
-                    std::string(first, find_linebreak(first, last)), iter);
+                    std::string(first, find_linebreak(first, last)),
+                    iter, failure_t());
             }
             else
             {
@@ -432,7 +445,8 @@ parse_floating(const InputIterator first, const InputIterator last)
             {
                 return result_t(
                     "toml::detial::parse_floating: invalid `.` appeared -> " +
-                    std::string(first, find_linebreak(first, last)), iter);
+                    std::string(first, find_linebreak(first, last)),
+                    iter, failure_t());
             }
             is_fractional_part = true;
             token += n;
@@ -445,7 +459,8 @@ parse_floating(const InputIterator first, const InputIterator last)
             {
                 return result_t(
                     "toml::detial::parse_floating: invalid `e|E` appeared -> " +
-                    std::string(first, find_linebreak(first, last)), iter);
+                    std::string(first, find_linebreak(first, last)),
+                    iter, failure_t());
             }
             is_exponential_part = true;
             token += n;
@@ -470,7 +485,8 @@ parse_floating(const InputIterator first, const InputIterator last)
                 {
                     return result_t("toml::detail::parse_floating: "
                         "`_` must be surrounded by at least one number -> " +
-                        std::string(first, find_linebreak(first, last)), iter);
+                        std::string(first, find_linebreak(first, last)),
+                        iter, failure_t());
                 }
                 else
                 {
@@ -487,7 +503,8 @@ parse_floating(const InputIterator first, const InputIterator last)
             {
                 return result_t(
                     "toml::detial::parse_floating: invalid `.` appeared -> " +
-                    std::string(first, find_linebreak(first, last)), iter);
+                    std::string(first, find_linebreak(first, last)),
+                    iter, failure_t());
             }
             else if(n == 'e' || n == 'E')
             {
@@ -502,8 +519,8 @@ parse_floating(const InputIterator first, const InputIterator last)
                 {
                     return result_t("toml::detial::parse_floating: "
                         "fractional part must have size -> " +
-                        std::string(first, find_linebreak(first, last)), iter);
-
+                        std::string(first, find_linebreak(first, last)),
+                        iter, failure_t());
                 }
                 break;
             }
@@ -526,7 +543,8 @@ parse_floating(const InputIterator first, const InputIterator last)
                 {
                     return result_t("toml::detail::parse_floating: "
                         "`_` must be surrounded by at least one number -> " +
-                        std::string(first, find_linebreak(first, last)), iter);
+                        std::string(first, find_linebreak(first, last)),
+                        iter, failure_t());
                 }
                 else
                 {
@@ -542,13 +560,15 @@ parse_floating(const InputIterator first, const InputIterator last)
             {
                 return result_t(
                     "toml::detial::parse_floating: invalid `.` appeared -> " +
-                    std::string(first, find_linebreak(first, last)), iter);
+                    std::string(first, find_linebreak(first, last)),
+                    iter, failure_t());
             }
             else if(n == 'e' || n == 'E')
             {
                 return result_t(
                     "toml::detial::parse_floating: invalid `e|E` appeared -> " +
-                    std::string(first, find_linebreak(first, last)), iter);
+                    std::string(first, find_linebreak(first, last)),
+                    iter, failure_t());
             }
             else
             {
@@ -559,9 +579,10 @@ parse_floating(const InputIterator first, const InputIterator last)
     if(token.empty())
     {
         return result_t("toml::detail::parse_floating: input is empty -> " +
-                std::string(first, find_linebreak(first, last)), iter);
+            std::string(first, find_linebreak(first, last)), iter, failure_t());
     }
-    return result_t(sign * boost::lexical_cast<floating>(token), iter);
+    return result_t(sign * boost::lexical_cast<floating>(token),
+                    iter, success_t());
 }
 
 } // detail
