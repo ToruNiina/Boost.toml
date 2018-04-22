@@ -318,7 +318,8 @@ parse_integer(const InputIterator first, const InputIterator last)
     }
     if(token.empty())
     {
-        return result_t("toml::detail::parse_integer: input is empty -> " +
+        return result_t("toml::detail::parse_integer: token is empty. "
+            "maybe main part start with invalid character -> " +
             std::string(first, find_linebreak(first, last)), iter, failure_t());
     }
     switch(t)
