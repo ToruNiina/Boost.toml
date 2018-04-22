@@ -262,6 +262,13 @@ parse_integer(const InputIterator first, const InputIterator last)
         const char n = *iter;
         if(n == 'x' || n == 'o' || n == 'b')
         {
+            if(sign == -1)
+            {
+                return result_t("toml::detail::parse_integer: hex, oct, bin "
+                    "representations are not allowd to be negative -> " + 
+                    std::string(first, find_linebreak(first, last)),
+                    iter, failure_t());
+            }
             ++iter;
             type = n;
         }
