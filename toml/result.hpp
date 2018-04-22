@@ -8,6 +8,9 @@ namespace toml
 namespace detail
 {
 
+struct success_t{};
+struct failure_t{};
+
 // contains value and the current iterator
 // case...
 // 1. success & token was consumed     : normal result
@@ -17,15 +20,38 @@ namespace detail
 template<typename Value, typename Iterator>
 struct result
 {
-    result(): storage_(std::string("uninitialized")){}
+    // to contain toml::string and std::string simultaneously,
+    // add extra type information to each type
+    typedef std::pair<Value,       success_t> success_type;
+    typedef std::pair<std::string, failure_t> failure_type;
+    typedef boost::variant<success_type, failure_type> storage_type;
+
+    result(): storage_(failure_type("uninitialized", failure_t())){}
     ~result(){}
 
     result(const result& rhs): iter(rhs.iter), storage_(rhs.storage_){}
     result& operator=(const result& rhs)
     {iter = rhs.iter; storage_ = rhs.storage_; return *this;}
 
-    result(const Value& v,       Iterator i): iter(i), storage_(v){}
-    result(const std::string& s, Iterator i): iter(i), storage_(s){}
+    result(const Value& v, Iterator i, success_t s)
+        : iter(i), storage_(success_type(v, s))
+    {}
+    result(const std::string& s, Iterator i, failure_t f)
+        : iter(i), storage_(failure_type(s, f))
+    {}
+
+    template<typename U, typename J>
+    result(const result<U, J>& rhs): iter(rhs.iterator())
+    {
+        if(rhs.is_ok())
+        {
+            this->storage_ = success_type(rhs.unwrap(), success_t());
+        }
+        else
+        {
+            this->storage_ = failure_type(rhs.unwrap_err(), failure_t());
+        }
+    }
 
 #ifdef BOOST_HAS_RVALUE_REFS
     result(result&& rhs)
@@ -33,8 +59,12 @@ struct result
     result& operator=(result&& rhs)
     {iter = rhs.iter; storage_ = rhs.storage_; return *this;}
 
-    result(Value&&       v, Iterator i): iter(i), storage_(std::move(v)){}
-    result(std::string&& s, Iterator i): iter(i), storage_(std::move(s)){}
+    result(Value&& v, Iterator i, success_t s)
+        : iter(i), storage_(success_type(std::move(v), s))
+    {}
+    result(std::string&& s, Iterator i, failure_t f)
+        : iter(i), storage_(failure_type(std::move(s), f))
+    {}
 #endif // rvalue_refs
 
     bool is_ok()  const BOOST_NOEXCEPT_OR_NOTHROW {return storage_.which()==0;}
@@ -56,25 +86,25 @@ struct result
     Value& unwrap()
     {
         if(this->is_err()){throw std::runtime_error(this->unwrap_err());}
-        return boost::get<Value>(this->storage_);
+        return boost::get<success_type>(this->storage_).first;
     }
     Value const& unwrap() const
     {
         if(this->is_err()){throw std::runtime_error(this->unwrap_err());}
-        return boost::get<Value>(this->storage_);
+        return boost::get<success_type>(this->storage_).first;
     }
 
     std::string& unwrap_err()
-    {return boost::get<std::string>(this->storage_);}
+    {return boost::get<failure_type>(this->storage_).first;}
     std::string const& unwrap_err() const
-    {return boost::get<std::string>(this->storage_);}
+    {return boost::get<failure_type>(this->storage_).first;}
 
     Iterator&       iterator()       BOOST_NOEXCEPT_OR_NOTHROW {return iter;}
     Iterator const& iterator() const BOOST_NOEXCEPT_OR_NOTHROW {return iter;}
 
   private:
-    Iterator iter;
-    boost::variant<Value, std::string> storage_;
+    Iterator     iter;
+    storage_type storage_;
 };
 
 template<typename charT, typename traits, typename Value, typename Iterator>
