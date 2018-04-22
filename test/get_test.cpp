@@ -87,6 +87,30 @@ BOOST_AUTO_TEST_CASE(test_get_floating_type)
     }
 }
 
+BOOST_AUTO_TEST_CASE(test_get_string_type)
+{
+    {
+        toml::value v("foo", toml::string::basic);
+        BOOST_CHECK_EQUAL("foo", toml::get<std::string       >(v));
+        BOOST_CHECK_EQUAL("foo", toml::get<boost::string_ref >(v));
+        BOOST_CHECK_EQUAL("foo", toml::get<boost::string_view>(v));
+#ifdef TOML_HAS_CXX17_STRING_VIEW
+        std::cerr << "c++17 string_view tested!" << std::endl;
+        BOOST_CHECK_EQUAL("foo", toml::get<std::string_view>(v));
+#endif // TOML_HAS_CXX17_STRING_VIEW
+    }
+    {
+        toml::value v("foo", toml::string::literal);
+        BOOST_CHECK_EQUAL("foo", toml::get<std::string       >(v));
+        BOOST_CHECK_EQUAL("foo", toml::get<boost::string_ref >(v));
+        BOOST_CHECK_EQUAL("foo", toml::get<boost::string_view>(v));
+#ifdef TOML_HAS_CXX17_STRING_VIEW
+        std::cerr << "c++17 string_view tested!" << std::endl;
+        BOOST_CHECK_EQUAL("foo", toml::get<std::string_view>(v));
+#endif // TOML_HAS_CXX17_STRING_VIEW
+    }
+}
+
 BOOST_AUTO_TEST_CASE(test_get_toml_array)
 {
     toml::value v(toml::array(0));
@@ -117,6 +141,7 @@ BOOST_AUTO_TEST_CASE(test_get_toml_array)
     BOOST_CHECK_EQUAL(static_cast<boost::int64_t>(72), deq.at(3));
 
 #ifdef TOML_HAS_CXX11_ARRAY
+    std::cerr << "c++11 array tested!" << std::endl;
     std::array<int, 4> ary = toml::get<std::array<int, 4> >(v);
     BOOST_CHECK_EQUAL(static_cast<int>(42), ary.at(0));
     BOOST_CHECK_EQUAL(static_cast<int>(54), ary.at(1));
@@ -125,6 +150,7 @@ BOOST_AUTO_TEST_CASE(test_get_toml_array)
 #endif // TOML_HAS_CXX11_ARRAY
 
 #ifdef TOML_HAS_CXX11_TUPLE
+    std::cerr << "c++11 tuple tested!" << std::endl;
     std::tuple<int, int, int, int> tpl =
         toml::get<std::tuple<int, int, int, int> >(v);
     BOOST_CHECK_EQUAL(static_cast<int>(42), std::get<0>(tpl));
@@ -171,6 +197,7 @@ BOOST_AUTO_TEST_CASE(test_get_toml_array_of_array)
     BOOST_CHECK_EQUAL(p.second.at(2), "baz");
 
 #ifdef TOML_HAS_CXX11_TUPLE
+    std::cerr << "c++11 tuple tested!" << std::endl;
     std::tuple<std::vector<int>, std::vector<std::string> > t =
         toml::get<std::tuple<std::vector<int>, std::vector<std::string> > >(v);
 
