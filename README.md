@@ -3,6 +3,21 @@ Boost.toml
 
 Boost.toml is a header-only toml parser depends on Boost.
 
+## Table of Contents
+
+- [example code](#example-code)
+- [getting toml values](#getting-toml-values)
+    - [basic usage of `toml::get`](#basic-usage-of-tomlget)
+    - [getting `toml::array`](#getting-tomlarray)
+    - [performance of getting `toml::array`](#performance-of-getting-tomlarray)
+    - [`toml::array` of `toml::array` having different types each other](#tomlarray-of-tomlarray-having-different-types-each-other)
+- [formatting toml values](#formatting-toml-values)
+- [underlying types](#underlying-types)
+    - [`toml::string` and `basic`, `literal` flags](#tomlstring-and-basic-literal-flags)
+    - [map class that represents `toml::table`](#map-class-that-represents-tomltable)
+    - [why not STL container?](#why-not-stl-container)
+- [Licensing terms](#licensing-terms)
+
 ## example code
 
 TODO
