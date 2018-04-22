@@ -585,6 +585,39 @@ parse_floating(const InputIterator first, const InputIterator last)
                     iter, success_t());
 }
 
+template<typename InputIterator>
+result<toml::value, InputIterator>
+parse_value(const InputIterator first, const InputIterator last)
+{
+    BOOST_STATIC_ASSERT(boost::is_same<
+            typename boost::iterator_value<InputIterator>::type, char>::value);
+    typedef result<toml::value, InputIterator> result_t;
+
+    if(first == last)
+    {
+        return result_t(std::string("toml::detail::parse_value: input is empty."
+            ), first, failure_t());
+    }
+
+    {
+        const result<boolean, InputIterator> r = parse_boolean(first, last);
+        if(r.is_ok()) {return result_t(r.unwrap(), r.iterator(), success_t());}
+        else if(r.iterator() != first) {return r;} // partial match
+    }
+    {
+        const result<integer, InputIterator> r = parse_integer(first, last);
+        if(r.is_ok()) {return result_t(r.unwrap(), r.iterator(), success_t());}
+        else if(r.iterator() != first) {return r;}
+    }
+    {
+        const result<floating, InputIterator> r = parse_floating(first, last);
+        if(r.is_ok()) {return result_t(r.unwrap(), r.iterator(), success_t());}
+        else if(r.iterator() != first) {return r;}
+    }
+    return result_t("toml::detail::parse_value: unknown token appeared -> " +
+        std::string(first, find_linebreak(first, last)), first, failure_t());
+}
+
 } // detail
 } // toml
 #endif// TOML_PARSER_HPP
