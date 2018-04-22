@@ -13,8 +13,8 @@ __NOTE__: This library is not a part of Boost C++ Library.
     - [basic usage of `toml::get`](#basic-usage-of-tomlget)
     - [getting `toml::array`](#getting-tomlarray)
     - [getting `toml::table`](#getting-tomltable)
-    - [performance of getting `toml::array` or `toml::table`](#performance-of-getting-tomlarray-or-tomltable)
     - [`toml::array` of `toml::array` having different types each other](#tomlarray-of-tomlarray-having-different-types-each-other)
+    - [performance of getting `toml::array` or `toml::table`](#performance-of-getting-tomlarray-or-tomltable)
 - [visiting value that has unknown type](#visiting-value-that-has-unknown-type).
 - [formatting toml values](#formatting-toml-values)
 - [datetime operation](#datetime-operation)
@@ -53,8 +53,9 @@ switch(v.which())
 if(v.is(toml::value::string_tag)) {/* do some stuff */}
 ```
 
-But it is painful to switch every time.
+But it is painful to write `switch-case` every time.
 Boost.toml provides a way to visit contained value without knowing its value.
+
 See also [visiting value that has unknown type](#visiting-value-that-has-unknown-type).
 
 ## getting toml values
@@ -131,6 +132,46 @@ auto bst_map  = toml::get<boost::container::map<toml::key, toml::value> >(v);
 auto bst_umap = toml::get<boost::unordered_map<toml::key, toml::value>  >(v);
 ```
 
+`toml::table` is an alias of `boost::container::flat_map`. So it has all the
+functionality that `flat_map` has. In most cases, the conversion is not needed.
+
+### `toml::array` of `toml::array` having different types each other
+
+Consider that you have this toml file.
+
+```toml
+array = [[1,2,3], ["foo", "bar", "baz"]]
+```
+
+What is the corresponding C++ type? If you completely know about the type of
+array before reading it, you can use `std::pair` or `std::tuple`.
+
+```cpp
+auto pr  = toml::get<std::pair <std::vector<int>, std::vector<std::string>>>(v);
+auto tpl = toml::get<std::tuple<std::vector<int>, std::vector<std::string>>>(v);
+```
+
+But generally, you cannot know the length of array and the type of array element
+in toml file. In that case, `toml::array` or `std::vector<toml::value>`
+can be used (actually, `toml::array` is just a
+`boost::container::vector<toml::value>`).
+
+```cpp
+toml::array a = toml::get<toml::array>(v);
+
+std::vector<int>    a1 = toml::get<std::vector<int>        >(a.at(0));
+std::vector<string> a2 = toml::get<std::vector<std::string>>(a.at(1));
+```
+
+You also can get this as `std::vector<toml::array>`.
+
+```cpp
+std::vector<toml::array> a = toml::get<std::vector<toml::array>>(v);
+
+int         a1 = toml::get<int        >(a.at(0).at(0)); // 1
+std::string a2 = toml::get<std::string>(a.at(1).at(0)); // "foo"
+```
+
 ### performance of getting `toml::array` or `toml::table`
 
 Because `toml::get` does type-casting when you pass your favorite container to
@@ -169,42 +210,8 @@ toml::value  v{1,2,3,4,5};
 toml::array& ar = toml::get<toml::array>(v);
 ```
 
-### `toml::array` of `toml::array` having different types each other
-
-Consider that you have this toml file.
-
-```toml
-array = [[1,2,3], ["foo", "bar", "baz"]]
-```
-
-What is the corresponding C++ type? If you completely know about the type of
-array before reading it, you can use `std::pair` or `std::tuple`.
-
-```cpp
-auto pr  = toml::get<std::pair <std::vector<int>, std::vector<std::string>>>(v);
-auto tpl = toml::get<std::tuple<std::vector<int>, std::vector<std::string>>>(v);
-```
-
-But generally, you cannot know the length of array and the type of array element
-in toml file. In that case, `toml::array` or `std::vector<toml::value>`
-can be used (actually, `toml::array` is just a
-`boost::container::vector<toml::value>`).
-
-```cpp
-toml::array a = toml::get<toml::array>(v);
-
-std::vector<int>    a1 = toml::get<std::vector<int>        >(a.at(0));
-std::vector<string> a2 = toml::get<std::vector<std::string>>(a.at(1));
-```
-
-You also can get this as `std::vector<toml::array>`.
-
-```cpp
-std::vector<toml::array> a = toml::get<std::vector<toml::array>>(v);
-
-int         a1 = toml::get<int        >(a.at(0).at(0)); // 1
-std::string a2 = toml::get<std::string>(a.at(1).at(0)); // "foo"
-```
+Although it is a bit boring to call `toml::get` for all the elements in the
+array, but there is a tradeoff between speed and usability.
 
 ## visiting value that has unknown type
 
@@ -273,11 +280,11 @@ The enum value or tag class can be passed to make `toml::value` that contains
 `toml::string`. It affects on the output format. By default, `basic_string` is
 chosen.
 
-```
+```cpp
 toml::value v1("foo", toml::string::basic);
 toml::value v2("bar", toml::string::literal);
 toml::value v3("baz", toml::basic_string);
-toml::value v4("qax", toml::literal_string);
+toml::value v4("qux", toml::literal_string);
 ```
 
 ### map class that represents `toml::table`
