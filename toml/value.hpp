@@ -217,6 +217,13 @@ struct value
     typename Visitor::result_type apply_visitor(Visitor v)
     {return boost::apply_visitor(v, this->storage_);}
 
+    bool operator==(const value& r) const {return this->storage_ == r.storage_;}
+    bool operator!=(const value& r) const {return this->storage_ != r.storage_;}
+    bool operator< (const value& r) const {return this->storage_ <  r.storage_;}
+    bool operator> (const value& r) const {return this->storage_ >  r.storage_;}
+    bool operator<=(const value& r) const {return this->storage_ <= r.storage_;}
+    bool operator>=(const value& r) const {return this->storage_ >= r.storage_;}
+
   private:
 
     storage_type storage_;
