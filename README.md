@@ -1,7 +1,7 @@
 Boost.toml
 ====
 
-Boost.toml is a header-only toml parser depends on Boost.
+Boost.toml is a header-only toml parser depending on Boost.
 
 __NOTE__: This library is not a part of Boost C++ Library.
 
@@ -15,7 +15,7 @@ __NOTE__: This library is not a part of Boost C++ Library.
     - [getting `toml::table`](#getting-tomltable)
     - [`toml::array` of `toml::array` having different types each other](#tomlarray-of-tomlarray-having-different-types-each-other)
     - [performance of getting `toml::array` or `toml::table`](#performance-of-getting-tomlarray-or-tomltable)
-- [visiting value that has unknown type](#visiting-value-that-has-unknown-type).
+- [visiting value that has unknown type](#visiting-value-that-has-unknown-type)
 - [formatting toml values](#formatting-toml-values)
 - [datetime operation](#datetime-operation)
 - [underlying types](#underlying-types)
@@ -107,7 +107,8 @@ std::list<std::int64_t> lst = toml::get<std::list<std::int64_t>>(v);
 std::array<char, 5>     ary = toml::get<std::array<char, 5>>(v);
 ```
 
-Surprisingly, you can also get `toml::array` as a `std::pair` or `std::tuple` type.
+Surprisingly, you can also get a `std::pair` or `std::tuple` type
+from `toml::array`.
 
 ```cpp
 toml::value v{1, 2};
@@ -121,19 +122,26 @@ currently, `boost::tuple` is not supported.
 
 ### getting `toml::table`
 
-You can get also `toml::table` as your favorite map type.
+Array of Tables can be obtained as the same way described before.
+
+```cpp
+std::vector<toml::table> tables = toml::get<std::vector<toml::table> >(v);
+```
+
+And you can get also `toml::table` as your favorite map type.
 
 ```cpp
 toml::value v{{"int", 42}, {"float", 3.14}, {"str", "foo"}};
 
-auto std_map  = toml::get<std::map<toml::key, toml::value>              >(v);
-auto std_umap = toml::get<std::unordered_map<toml::key, toml::value>    >(v);
-auto bst_map  = toml::get<boost::container::map<toml::key, toml::value> >(v);
-auto bst_umap = toml::get<boost::unordered_map<toml::key, toml::value>  >(v);
+auto std_map  = toml::get<std::map<toml::key, toml::value>             >(v);
+auto std_umap = toml::get<std::unordered_map<toml::key, toml::value>   >(v);
+auto bst_map  = toml::get<boost::container::map<toml::key, toml::value>>(v);
+auto bst_umap = toml::get<boost::unordered_map<toml::key, toml::value> >(v);
 ```
 
-`toml::table` is an alias of `boost::container::flat_map`. So it has all the
-functionality that `flat_map` has. In most cases, the conversion is not needed.
+__NOTE__: `toml::table` is an alias of `boost::container::flat_map`.
+So it has all the functionality that `flat_map` has.
+In most cases, the conversion is not needed.
 
 ### `toml::array` of `toml::array` having different types each other
 
