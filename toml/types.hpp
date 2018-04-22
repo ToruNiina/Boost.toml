@@ -30,5 +30,31 @@ typedef boost::container::map<key, value> table;
 #else
 typedef boost::container::flat_map<key, value> table;
 #endif
+
+inline bool operator==(const datetime& lhs, const datetime& rhs)
+{
+    return lhs.d == rhs.d && lhs.t == rhs.t;
+}
+inline bool operator!=(const datetime& lhs, const datetime& rhs)
+{
+    return !(lhs == rhs);
+}
+inline bool operator< (const datetime& lhs, const datetime& rhs)
+{
+    return (lhs.d == rhs.d) ? (lhs.t < rhs.t) : (lhs.d < rhs.d);
+}
+inline bool operator> (const datetime& lhs, const datetime& rhs)
+{
+    return rhs < lhs;
+}
+inline bool operator<=(const datetime& lhs, const datetime& rhs)
+{
+    return !(lhs > rhs);
+}
+inline bool operator>=(const datetime& lhs, const datetime& rhs)
+{
+    return !(lhs < rhs);
+}
+
 } // toml
 #endif// TOML_TYPES_HPP
