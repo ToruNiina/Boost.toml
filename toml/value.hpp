@@ -214,6 +214,7 @@ struct value
 
     void swap(value& rhs) {this->storage_.swap(rhs.storage_);}
 
+#if __cplusplus <= 201103L
     template<typename Visitor>
     typename Visitor::result_type apply_visitor(Visitor v) const
     {return boost::apply_visitor(v, this->storage_);}
@@ -221,6 +222,17 @@ struct value
     template<typename Visitor>
     typename Visitor::result_type apply_visitor(Visitor v)
     {return boost::apply_visitor(v, this->storage_);}
+#else
+    template<typename Visitor>
+    auto apply_visitor(Visitor v) const
+        -> decltype(boost::apply_visitor(v, this->storage_))
+    {return boost::apply_visitor(v, this->storage_);}
+
+    template<typename Visitor>
+    auto apply_visitor(Visitor v)
+        -> decltype(boost::apply_visitor(v, this->storage_))
+    {return boost::apply_visitor(v, this->storage_);}
+#endif
 
     bool operator==(const value& r) const {return this->storage_ == r.storage_;}
     bool operator!=(const value& r) const {return this->storage_ != r.storage_;}
@@ -252,18 +264,32 @@ get(value const& v)
     return v.template get<T>();
 }
 
+#if __cplusplus <= 201103L
 template<typename Visitor>
-inline typename Visitor::result_type
-apply_visitor(Visitor vis, const value& v)
+typename Visitor::result_type apply_visitor(Visitor vis, const value& v)
 {
     return v.apply_visitor(vis);
 }
 template<typename Visitor>
-inline typename Visitor::result_type
-apply_visitor(Visitor vis, value& v)
+typename Visitor::result_type apply_visitor(Visitor vis, value& v)
 {
     return v.apply_visitor(vis);
 }
+#else // after c++11
+template<typename Visitor>
+auto apply_visitor(Visitor vis, const value& v)
+    -> decltype(v.apply_visitor(vis))
+{
+    return v.apply_visitor(vis);
+}
+template<typename Visitor>
+auto apply_visitor(Visitor vis, value& v)
+    -> decltype(v.apply_visitor(vis))
+{
+    return v.apply_visitor(vis);
+}
+#endif
+
 
 template<typename T> struct to_kind
 {BOOST_STATIC_CONSTEXPR typename value::kind val = value::undefined;};
