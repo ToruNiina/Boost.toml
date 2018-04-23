@@ -275,6 +275,17 @@ typename Visitor::result_type apply_visitor(Visitor vis, value& v)
 {
     return v.apply_visitor(vis);
 }
+
+template<typename Visitor>
+typename Visitor::result_type visit(Visitor vis, const value& v)
+{
+    return v.apply_visitor(vis);
+}
+template<typename Visitor>
+typename Visitor::result_type visit(Visitor vis, value& v)
+{
+    return v.apply_visitor(vis);
+}
 #else // after c++11
 template<typename Visitor>
 auto apply_visitor(Visitor vis, const value& v)
@@ -285,6 +296,16 @@ auto apply_visitor(Visitor vis, const value& v)
 template<typename Visitor>
 auto apply_visitor(Visitor vis, value& v)
     -> decltype(v.apply_visitor(vis))
+{
+    return v.apply_visitor(vis);
+}
+template<typename Visitor>
+auto visit(Visitor vis, const value& v) -> decltype(v.apply_visitor(vis))
+{
+    return v.apply_visitor(vis);
+}
+template<typename Visitor>
+auto visit(Visitor vis, value& v) -> decltype(v.apply_visitor(vis))
 {
     return v.apply_visitor(vis);
 }
