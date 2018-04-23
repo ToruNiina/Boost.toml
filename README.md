@@ -3,6 +3,9 @@ Boost.toml
 
 Boost.toml is a header-only toml parser depending on Boost.
 
+tested with `-std=c++(98|03|11|14|17)`. Some functionalities (e.g. conversion to
+`std::string_view`) are disabled when older standard version is specified.
+
 __NOTE__: This library is not a part of Boost C++ Library.
 
 ## Table of Contents
@@ -22,6 +25,7 @@ __NOTE__: This library is not a part of Boost C++ Library.
     - [`toml::string` and `basic`, `literal` flags](#tomlstring-and-basic-literal-flags)
     - [map class that represents `toml::table`](#map-class-that-represents-tomltable)
     - [why not STL container?](#why-not-stl-container)
+- [synopsis](#synopsis)
 - [Licensing terms](#licensing-terms)
 
 ## example code
@@ -92,17 +96,19 @@ int main()
     const auto name_alpha = toml::get<boost::string_view>(servers.at(0).at("name"));
     const auto ip_alpha   = toml::get<boost::string_view>(servers.at(0).at("ip"));
     const auto dc_alpha   = toml::get<boost::string_view>(servers.at(0).at("dc"));
-    const auto name_beta  = toml::get<std::string>(servers.at(1).at("name"));
-    const auto ip_beta    = toml::get<std::string>(servers.at(1).at("ip"));
-    const auto dc_beta    = toml::get<std::string>(servers.at(1).at("dc"));
+    const auto name_beta  = toml::get<boost::string_ref >(servers.at(1).at("name"));
+    const auto ip_beta    = toml::get<boost::string_ref >(servers.at(1).at("ip"));
+    const auto dc_beta    = toml::get<boost::string_ref >(servers.at(1).at("dc"));
 
     const auto& clients = toml::get<toml::table>(file.at("clients"));
-    // if you know the length of the array and type of the elements,
+
     // you can do this!
+    // data = [ ["gamma", "delta"], [1, 2] ]
+    // the first array is array of string, the second one is array of int.
     const auto  data = toml::get<
         std::pair<std::vector<std::string>, std::vector<int>>
         >(clients.at("data"));
-    // the first array is array of string, the second one is array of int.
+    // it supports std::tuple also.
 
     return 0;
 }
@@ -110,8 +116,11 @@ int main()
 
 ## confirming value type
 
-If you don't know actually what type is contained in the data, you can get
-type information as `enum`.
+If you pass wrong template argument to `toml::get`, `boost::bad_get` will be
+thrown. Before using `toml::get`, it should be known what type does the value have.
+
+When you cannot know actually what type is contained in the data, `enum` value
+representing type information is useful.
 
 ```cpp
 toml::table data = toml::parse("sample.toml");
@@ -126,6 +135,8 @@ switch(v.which())
     // ...
 }
 ```
+
+the complete set of this `enum` values is found in [synopsis](#synopsis).
 
 `toml::value` also has `is()` member function that checks the type.
 
@@ -150,30 +161,23 @@ You can `get` values from toml file by using `toml::get<T>` function.
 toml::value v1(42);
 // you can get a reference when you get as the exact toml type
 toml::integer& i_ref = toml::get<toml::integer>(v1);
+i_ref = 6 * 9; // v1 will be 54.
 
 // you can cast the value if they are convertible
-std::uint32_t i = toml::get<std::uint32_t>(v1);
+std::uint32_t i = toml::get<std::uint32_t>(v1); // 54
 
-toml::value v2(3.14);
-const float f = toml::get<float>(v); // also, you can do this.
+// to avoid deep-copy, it is useful to get const reference.
+toml::value v2{{"int", 42}, {"float", 3.14}, {"str", "foo"}};
+toml::table const& tab = toml::get<toml::table>(v2);
 ```
 
-If you pass an exact toml type to `toml::get`'s template argument,
-you can obtain an lvalue reference to the contained value.
+If you pass a convertible type (like `int` for `toml::integer`) to `toml::get`'s
+template argument, it casts the value to the type.
+In that case, you can't get a lvalue reference that points to the contained
+value because it returns `prvalue`.
 
-```cpp
-toml::value v(42);
-toml::integer& i = toml::get<toml::integer>(v);
-i = 6 * 9;
-std::cout << toml::get<toml::integer>(v) << std::endl; // 54
-
-toml::value t{{"int", 42}, {"float", 3.14}, {"str", "foo"}};
-toml::table const& table = toml::get<toml::table>(t);
-```
-
-If you pass a different type to `toml::get`'s template argument, it casts the
-value to the type, so it will return prvalue. In that case, you can't get the
-reference that points to the contained value.
+If you pass a wrong type (like `std::string` for `toml::integer`) to
+`toml::get`, it will throw `boost::bad_get`.
 
 ### getting `toml::array`
 
@@ -231,7 +235,7 @@ Consider that you have this toml file.
 array = [[1, 2, 3], ["foo", "bar", "baz"]]
 ```
 
-What is the corresponding C++ type? If you completely know about the type of
+What is the corresponding C++ type? If you know about the length and the type of
 array before reading it, you can use `std::pair` or `std::tuple`.
 
 ```cpp
@@ -241,7 +245,7 @@ auto tpl = toml::get<std::tuple<std::vector<int>, std::vector<std::string>>>(v);
 
 But generally, you cannot know the length of array and the type of array element
 in toml file. In that case, `toml::array` or `std::vector<toml::value>`
-can be used (actually, `toml::array` is just a
+can be used (actually, `toml::array` is just an alias of
 `boost::container::vector<toml::value>`).
 
 ```cpp
@@ -251,7 +255,7 @@ std::vector<int>    a1 = toml::get<std::vector<int>        >(a.at(0));
 std::vector<string> a2 = toml::get<std::vector<std::string>>(a.at(1));
 ```
 
-You also can get this as `std::vector<toml::array>`.
+Or you can get this as `std::vector<toml::array>`.
 
 ```cpp
 std::vector<toml::array> a = toml::get<std::vector<toml::array>>(v);
@@ -263,7 +267,7 @@ std::string a2 = toml::get<std::string>(a.at(1).at(0)); // "foo"
 ### performance of getting `toml::array` or `toml::table`
 
 Because `toml::get` does type-casting when you pass your favorite container to
-`toml::get`, it essentially do the same thing as following.
+`toml::get`, it essentially does the same thing as following.
 
 ```cpp
 std::vector<int> get_int_vec(const toml::value& v)
@@ -276,7 +280,7 @@ std::vector<int> get_int_vec(const toml::value& v)
 }
 ```
 
-getting `toml::table` is simpler than the case of `toml::array`.
+getting `toml::table` as a different `map` type is basically the same.
 
 ```cpp
 std::map<toml::key, toml::value> get_std_map(const toml::value& v)
@@ -288,10 +292,10 @@ std::map<toml::key, toml::value> get_std_map(const toml::value& v)
 ```
 
 If the array or table has many many elements, it will take time because it
-essentially constructs completely new array or table.
+constructs completely new array or table.
 
-Sometimes it is intolerable. In that case, you can get them as
-just a (const) reference.
+Sometimes it is intolerable.
+In that case, you can get them as a (const) reference to avoid deep-copy.
 
 ```cpp
 toml::value  v{1,2,3,4,5};
@@ -310,10 +314,12 @@ without knowing its type.
 toml::table data = toml::parse("sample.toml");
 const auto twice = toml::apply_visitor(
     [](const auto& val) {return val + val}, data["number"]);
+const auto half  = toml::visit( // completely same function as above
+    [](const auto& val) {return val / 2},   data["number"]);
 ```
 
 The usage is similar to `boost::apply_visitor` and `boost::variant`, bacause
-it depends on it.
+it uses them internally.
 
 ## formatting toml values
 
@@ -322,22 +328,26 @@ TODO
 ## datetime operation
 
 Depending on Boost.Date\_Time, Boost.toml supports datetime operation.
-You can just get `boost::posix_time::ptime` from `toml::datetime`,
-so you can operate `datetime` in the following way.
+Since `toml::datetime` is actually just an alias of `boost::posix_time::ptime`,
+you can operate `datetime` in the same way as Boost.Date\_Time.
 
 ```cpp
-toml::value v;
 boost::posix_time::ptime dt = toml::get<boost::posix_time::ptime>(v);
+dt += boost::date_time::days(7);
+dt += boost::date_time::hours(12);
 ```
 
 And just for ease, Boost.toml imports some classes and enums.
-You can construct your `toml::datetime` value in the same way as
-Boost.Date\_Time.
+You can operate your `toml::datetime` value in the same way as
+Boost.Date\_Time without writing namespace `boost::date_time::` explicitly.
 
 ```cpp
 toml::value d(toml::date(2018, toml::Apr, 1));
 toml::value t(toml::hours(1) + toml::minutes(3) + toml::seconds(10));
 toml::value dt(d, t);
+toml::get<toml::datetime>(dt) += toml::years(1);
+toml::get<toml::datetime>(dt) += toml::months(2);
+toml::get<toml::datetime>(dt) += toml::days(10);
 ```
 
 ## underlying types
@@ -365,8 +375,8 @@ But it can be converted to std::string automatically, so the users do not need
 to consider about the difference between `toml::string` and `std::string`.
 
 The enum value or tag class can be passed to make `toml::value` that contains
-`toml::string`. It affects on the output format. By default, `basic_string` is
-chosen.
+`toml::string`. It affects on the output format. By default, it become
+`basic_string`.
 
 ```cpp
 toml::value v1("foo", toml::string::basic);
@@ -377,10 +387,10 @@ toml::value v4("qux", toml::literal_string);
 
 ### map class that represents `toml::table`
 
-Here, `flat_map` is used to store toml.table because normally the data from
-file will not be added or erased so many times. You can change it to a
-`boost::container::map` by defining `BOOST_TOML_USE_MAP_FOR_TABLE` as a compiler
-flag.
+Here, `flat_map` is used to store toml.table because normally the number of
+elements in data from file will never be changed. You can change it to a
+`boost::container::map` by defining `BOOST_TOML_USE_MAP_FOR_TABLE` before
+including it or as a compiler flag.
 
 ### Why not STL container?
 
@@ -393,6 +403,6 @@ that is defined recursively.
 
 This library is distributed under the MIT License.
 
-- copyright 2018, Toru Niina
+- copyright (c) 2018, Toru Niina
 
 All rights reserved.
