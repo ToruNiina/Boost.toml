@@ -97,7 +97,7 @@ inline std::string read_utf8_codepoint(const std::string& str)
     return character;
 }
 
-// XXX: this funciton is used in the loop to parse string.
+// XXX: this funciton is used in the loop in parse_string.
 //      So, unlike the other parse_* functions, it returns an iterator that
 //      points the last element of the escape_sequence for ease.
 template<typename InputIterator>
@@ -594,6 +594,137 @@ parse_floating(const InputIterator first, const InputIterator last)
 }
 
 template<typename InputIterator>
+result<string, InputIterator>
+parse_multi_basic_string(const InputIterator first, const InputIterator last)
+{
+    return result<string, InputIterator>("TODO", first, failure_t());
+}
+
+template<typename InputIterator>
+result<string, InputIterator>
+parse_multi_literal_string(const InputIterator first, const InputIterator last)
+{
+    return result<string, InputIterator>("TODO", first, failure_t());
+}
+
+template<typename InputIterator>
+result<string, InputIterator>
+parse_basic_string(const InputIterator first, const InputIterator last)
+{
+    InputIterator iter(first);
+    if(*iter != '"')
+    {
+        throw std::invalid_argument("toml::detail::parse_basic_string: "
+                "internal error appeared");
+    }
+    ++iter;
+
+    std::string token;
+    for(; iter != last; ++iter)
+    {
+        if(*iter == '"')
+        {
+            return result_t(string(token, string::basic), iter, success_t());
+        }
+        else if(*iter == '\\')
+        {
+            const result_t unesc = parse_escape_sequence(iter, last);
+            if(unesc.is_err()) {return unesc;}
+            token += unesc.unwrap();
+            iter = unesc.iterator();
+            // XXX after this, the iterator will be incremented.
+            // read the comment at the front of parse_escape_sequence.
+        }
+        else if(0x00 <= *iter && *iter <= 0x1F || *iter == 0x7F)
+        {
+            const int ch = *iter;
+            std::ostringstream oss; oss << std::hex << ch;
+            return result_t("toml::detail::parse_basic_string: "
+                "bare control character appeared -> 0x" + oss.str(),
+                iter, failure_t());
+        }
+        else
+        {
+            token += *iter;
+        }
+    }
+    return result_t("toml::detail::parse_basic_string: "
+        "basic string is not closed by `\"` -> " +
+        std::string(first, find_linebreak(first, last)), iter, failure_t());
+}
+
+template<typename InputIterator>
+result<string, InputIterator>
+parse_literal_string(const InputIterator first, const InputIterator last)
+{
+    InputIterator iter(first);
+    if(*iter != '\'')
+    {
+        throw std::invalid_argument("toml::detail::parse_literal_string: "
+                "internal error appeared");
+    }
+    ++iter;
+
+    std::string token;
+    for(; iter != last; ++iter)
+    {
+        if(*iter == '\'')
+        {
+            return result_t(string(token, string::literal), iter, success_t());
+        }
+        else if((*iter != 0x09 && 0x00 <= *iter && *iter <= 0x1F) ||
+                *iter == 0x7F)
+        {
+            const int ch = *iter;
+            std::ostringstream oss; oss << std::hex << ch;
+            return result_t("toml::detail::parse_literal_string: "
+                "bare control character appeared -> 0x" + oss.str(),
+                iter, failure_t());
+        }
+        else
+        {
+            token += *iter;
+        }
+    }
+    return result_t("toml::detail::parse_literal_string: "
+        "literal string is not closed by `'` -> " +
+        std::string(first, find_linebreak(first, last)), iter, failure_t());
+}
+
+template<typename InputIterator>
+result<string, InputIterator>
+parse_string(const InputIterator first, const InputIterator last)
+{
+    typedef result<string, InputIterator> result_t;
+
+    if(first == last)
+    {
+        return result_t(std::string(
+            "toml::detail::parse_string: input is empty."), first, failure_t());
+    }
+
+    InputIterator iter = first;
+    if(*iter == '"')
+    {
+        if(++iter != last && *iter == '"' && ++iter != last && *iter == '"')
+        {
+            return parse_multi_basic_string(first, last);
+        }
+        return parse_basic_string(first, last);
+    }
+    else if(*iter == '\'')
+    {
+        if(++iter != last && *iter == '\'' && ++iter != last && *iter == '\'')
+        {
+            return parse_multi_literal_string(first, last);
+        }
+        return parse_literal_string(first, last);
+    }
+    return result_t(std::string(
+        "toml::detail::parse_string: failed. try next"), first, failure_t());
+}
+
+template<typename InputIterator>
 result<toml::value, InputIterator>
 parse_value(const InputIterator first, const InputIterator last)
 {
@@ -603,8 +734,8 @@ parse_value(const InputIterator first, const InputIterator last)
 
     if(first == last)
     {
-        return result_t(std::string("toml::detail::parse_value: input is empty."
-            ), first, failure_t());
+        return result_t(std::string(
+            "toml::detail::parse_value: input is empty."), first, failure_t());
     }
 
     {
@@ -613,12 +744,18 @@ parse_value(const InputIterator first, const InputIterator last)
         else if(r.iterator() != first) {return r;} // partial match
     }
     {
+        // floating parser should be applied earlier than integer parser.
+        const result<floating, InputIterator> r = parse_floating(first, last);
+        if(r.is_ok()) {return result_t(r.unwrap(), r.iterator(), success_t());}
+        else if(r.iterator() != first) {return r;}
+    }
+    {
         const result<integer, InputIterator> r = parse_integer(first, last);
         if(r.is_ok()) {return result_t(r.unwrap(), r.iterator(), success_t());}
         else if(r.iterator() != first) {return r;}
     }
     {
-        const result<floating, InputIterator> r = parse_floating(first, last);
+        const result<string, InputIterator> r = parse_string(first, last);
         if(r.is_ok()) {return result_t(r.unwrap(), r.iterator(), success_t());}
         else if(r.iterator() != first) {return r;}
     }
