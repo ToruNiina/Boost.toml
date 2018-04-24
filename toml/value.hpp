@@ -225,12 +225,12 @@ struct value
 #else
     template<typename Visitor>
     auto apply_visitor(Visitor v) const
-        -> decltype(boost::apply_visitor(v, this->storage_))
+        -> decltype(boost::apply_visitor(v, std::declval<storage_type>()))
     {return boost::apply_visitor(v, this->storage_);}
 
     template<typename Visitor>
     auto apply_visitor(Visitor v)
-        -> decltype(boost::apply_visitor(v, this->storage_))
+        -> decltype(boost::apply_visitor(v, std::declval<storage_type>()))
     {return boost::apply_visitor(v, this->storage_);}
 #endif
 
