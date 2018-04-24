@@ -386,7 +386,7 @@ parse_floating(const InputIterator first, const InputIterator last)
         if(++iter != last && *iter == 'a' && ++iter != last && *iter == 'n')
         {
             return result_t(std::numeric_limits<floating>::quiet_NaN(),
-                    iter, success_t());
+                    ++iter, success_t());
         }
         return result_t(
             "toml::detail::parse_floating: unknown keyword, maybe `nan`? ->" +
@@ -398,7 +398,7 @@ parse_floating(const InputIterator first, const InputIterator last)
         {
             return result_t(
                 sign * std::numeric_limits<floating>::infinity(),
-                iter, success_t());
+                ++iter, success_t());
         }
         return result_t(
             "toml::detail::parse_floating: unknown keyword, maybe `inf`? ->" +
@@ -420,9 +420,16 @@ parse_floating(const InputIterator first, const InputIterator last)
             return result_t("toml::detail::parse_floating: got `0`. "
                 "it's not a floating point number, it's integer -> " +
                 std::string(first, find_linebreak(first, last)),
-                iter, failure_t());
+                first, failure_t()); // XXX return without consuming token
         }
         integer_part_started = true;
+        if(*iter != '.' && *iter != 'e' && *iter != 'E')
+        {
+            return result_t("toml::detail::parse_floating: no `.` or `e` "
+                "appeared after 0. leading 0 in integer part is not allowed -> "
+                + std::string(first, find_linebreak(first, last)),
+                iter, failure_t());
+        }
     }
     for(; iter != last; ++iter)
     {
@@ -480,6 +487,13 @@ parse_floating(const InputIterator first, const InputIterator last)
             break;
         }
     }
+    if(!is_fractional_part && !is_exponential_part)
+    {
+        return result_t("toml::detial::parse_floating: "
+            "floating point must have fractional or exponent prt. not Float -> "
+            + std::string(first, find_linebreak(first, last)),
+            first, failure_t());
+    }
     if(is_fractional_part)
     {
         underscore = true; //to avoid leading 0 for fractional part (ex. 0._1)
@@ -523,20 +537,21 @@ parse_floating(const InputIterator first, const InputIterator last)
             }
             else
             {
-                if(!fractional_part_has_size)
-                {
-                    return result_t("toml::detial::parse_floating: "
-                        "fractional part must have size -> " +
-                        std::string(first, find_linebreak(first, last)),
-                        iter, failure_t());
-                }
                 break;
             }
+        }
+        if(!fractional_part_has_size)
+        {
+            return result_t("toml::detial::parse_floating: "
+                "fractional part must have size -> " +
+                std::string(first, find_linebreak(first, last)),
+                iter, failure_t());
         }
     }
     if(is_exponential_part)
     {
         underscore = true; //to avoid leading 0 for fractional part (ex. 1e_10)
+        bool exponeital_part_has_size = false;
         if(*iter == '+' || *iter == '-')
         {
             token += *iter;
@@ -563,6 +578,7 @@ parse_floating(const InputIterator first, const InputIterator last)
             {
                 token += n;
                 underscore = false;
+                exponeital_part_has_size = true;
             }
             else if(n == '.')
             {
@@ -583,12 +599,20 @@ parse_floating(const InputIterator first, const InputIterator last)
                 break;
             }
         }
+        if(!exponeital_part_has_size)
+        {
+            return result_t("toml::detial::parse_floating: "
+                "exponential part must have size -> " +
+                std::string(first, find_linebreak(first, last)),
+                iter, failure_t());
+        }
     }
     if(token.empty())
     {
         return result_t("toml::detail::parse_floating: input is empty -> " +
             std::string(first, find_linebreak(first, last)), iter, failure_t());
     }
+    std::cout << "parse_float token = " << token << std::endl;
     return result_t(sign * boost::lexical_cast<floating>(token),
                     iter, success_t());
 }
