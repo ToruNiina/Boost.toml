@@ -611,6 +611,8 @@ template<typename InputIterator>
 result<string, InputIterator>
 parse_basic_string(const InputIterator first, const InputIterator last)
 {
+    typedef result<string, InputIterator> result_t;
+
     InputIterator iter(first);
     if(*iter != '"')
     {
@@ -657,6 +659,8 @@ template<typename InputIterator>
 result<string, InputIterator>
 parse_literal_string(const InputIterator first, const InputIterator last)
 {
+    typedef result<string, InputIterator> result_t;
+
     InputIterator iter(first);
     if(*iter != '\'')
     {
