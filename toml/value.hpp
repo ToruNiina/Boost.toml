@@ -74,10 +74,7 @@ struct value
     value(const string& v): storage_(v){}
     value(const char* v)       : storage_(string(v)){}
     value(const std::string& v): storage_(string(v)){}
-    value(const char* v, basic_tag t)  : storage_(string(v, t)){}
-    value(const char* v, literal_tag t): storage_(string(v, t)){}
-    value(const std::string& v, basic_tag t)  : storage_(string(v, t)){}
-    value(const std::string& v, literal_tag t): storage_(string(v, t)){}
+    value(const char* v,        string::kind_t k): storage_(string(v, k)){}
     value(const std::string& v, string::kind_t k): storage_(string(v, k)){}
 
     template<typename T>
@@ -115,8 +112,6 @@ struct value
 #ifdef BOOST_HAS_RVALUE_REFS
     value(string&&      v): storage_(std::move(v)) {}
     value(std::string&& v): storage_(string(std::move(v))) {}
-    value(std::string&& v, basic_tag t)     : storage_(string(std::move(v),t)){}
-    value(std::string&& v, literal_tag t)   : storage_(string(std::move(v),t)){}
     value(std::string&& v, string::kind_t k): storage_(string(std::move(v),k)){}
     value(array&& v): storage_(std::move(v)) {}
     value(table&& v): storage_(std::move(v)) {}

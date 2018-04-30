@@ -117,13 +117,13 @@ parse_escape_sequence(const InputIterator first, const InputIterator last)
 
     switch(*iter)
     {
-        case '\\': return result_t(string("\\", basic_string),iter,success_t());
-        case '"' : return result_t(string("\"", basic_string),iter,success_t());
-        case 'b' : return result_t(string("\b", basic_string),iter,success_t());
-        case 't' : return result_t(string("\t", basic_string),iter,success_t());
-        case 'n' : return result_t(string("\n", basic_string),iter,success_t());
-        case 'f' : return result_t(string("\f", basic_string),iter,success_t());
-        case 'r' : return result_t(string("\r", basic_string),iter,success_t());
+        case '\\': return result_t(string("\\",string::basic),iter,success_t());
+        case '"' : return result_t(string("\"",string::basic),iter,success_t());
+        case 'b' : return result_t(string("\b",string::basic),iter,success_t());
+        case 't' : return result_t(string("\t",string::basic),iter,success_t());
+        case 'n' : return result_t(string("\n",string::basic),iter,success_t());
+        case 'f' : return result_t(string("\f",string::basic),iter,success_t());
+        case 'r' : return result_t(string("\r",string::basic),iter,success_t());
         case 'u' :
         {
             if(std::distance(iter, last) < 5)
@@ -146,7 +146,7 @@ parse_escape_sequence(const InputIterator first, const InputIterator last)
 
             const std::string unesc =
                 read_utf8_codepoint(std::string(cp_begin, cp_end));
-            return result_t(string(unesc, basic_string), cp_end, success_t());
+            return result_t(string(unesc, string::basic), cp_end, success_t());
         }
         case 'U':
         {
@@ -170,7 +170,7 @@ parse_escape_sequence(const InputIterator first, const InputIterator last)
 
             const std::string unesc =
                 read_utf8_codepoint(std::string(cp_begin, cp_end));
-            return result_t(string(unesc, basic_string), cp_end, success_t());
+            return result_t(string(unesc, string::basic), cp_end, success_t());
         }
         default:
         {
