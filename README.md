@@ -3,8 +3,9 @@ Boost.toml
 
 Boost.toml is a header-only toml parser depending on Boost.
 
-tested with `-std=c++(98|03|11|14|17)`. Some functionalities (e.g. conversion to
-`std::string_view`) are disabled when older standard version is specified.
+tested with `-std=c++(98|03|11|14|17)`. Some functionalities (e.g. construction
+from `std::initilalizer_list`) are disabled when old standard version is
+specified.
 
 __NOTE__: This library is not a part of Boost C++ Library.
 
@@ -374,15 +375,12 @@ types.
 But it can be converted to std::string automatically, so the users do not need
 to consider about the difference between `toml::string` and `std::string`.
 
-The enum value or tag class can be passed to make `toml::value` that contains
-`toml::string`. It affects on the output format. By default, it become
-`basic_string`.
+an enum value can be passed to make `toml::value` that contains `toml::string`.
+It affects on the output format. By default, it is set as `basic_string`.
 
 ```cpp
 toml::value v1("foo", toml::string::basic);
 toml::value v2("bar", toml::string::literal);
-toml::value v3("baz", toml::basic_string);
-toml::value v4("qux", toml::literal_string);
 ```
 
 ### map class that represents `toml::table`
