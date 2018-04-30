@@ -21,12 +21,12 @@ BOOST_AUTO_TEST_CASE(test_exact_toml_type)
     }
     {
         toml::value v("foo");
-        BOOST_CHECK_EQUAL(toml::string("foo", toml::basic_string),
+        BOOST_CHECK_EQUAL(toml::string("foo", toml::string::basic),
                           toml::get<toml::string>(v));
     }
     {
-        toml::value v("foo", toml::literal_string);
-        BOOST_CHECK_EQUAL(toml::string("foo", toml::literal_string),
+        toml::value v("foo", toml::string::literal);
+        BOOST_CHECK_EQUAL(toml::string("foo", toml::string::literal),
                           toml::get<toml::string>(v));
     }
     {
