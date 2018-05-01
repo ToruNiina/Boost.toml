@@ -3,6 +3,7 @@
 #include <toml/strings.hpp>
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/date_time/local_time/local_time.hpp>
 #include <boost/container/vector.hpp>
 
 #ifdef TOML_USE_MAP_FOR_TABLE
@@ -17,14 +18,16 @@ namespace toml
 typedef std::string key;
 struct value;
 
-typedef bool                              boolean;
-typedef boost::int64_t                    integer;
-typedef double                            floating;
-// typedef string                         string;
-typedef boost::gregorian::date            date;
-typedef boost::posix_time::time_duration  time;
-typedef boost::posix_time::ptime          datetime;
-typedef boost::container::vector<value>   array;
+typedef bool                               boolean;
+typedef boost::int64_t                     integer;
+typedef double                             floating;
+// typedef string                          string;
+typedef boost::gregorian::date             date;
+typedef boost::posix_time::time_duration   time;
+typedef boost::posix_time::ptime           datetime;
+typedef boost::local_time::time_zone_ptr   time_zone_ptr;
+typedef boost::local_time::local_date_time offset_datetime;
+typedef boost::container::vector<value>    array;
 
 #ifdef TOML_USE_MAP_FOR_TABLE
 typedef boost::container::map<key, value> table;
