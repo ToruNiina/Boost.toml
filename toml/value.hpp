@@ -35,17 +35,17 @@ struct value
 
     enum kind
     {
-        empty_tag    = 0,
-        boolean_tag  = 1,
-        integer_tag  = 2,
-        float_tag    = 3,
-        string_tag   = 4,
-        date_tag     = 5,
-        time_tag     = 6,
-        datetime_tag = 7,
-        array_tag    = 8,
-        table_tag    = 9,
-        undefined    = 10
+        empty_tag     = 0,
+        boolean_tag   = 1,
+        integer_tag   = 2,
+        float_tag     = 3,
+        string_tag    = 4,
+        date_tag      = 5,
+        time_tag      = 6,
+        datetime_tag  = 7,
+        array_tag     = 8,
+        table_tag     = 9,
+        undefined_tag = 10
     };
 
     value(){}
@@ -308,7 +308,7 @@ auto visit(Visitor vis, value& v) -> decltype(v.apply_visitor(vis))
 
 
 template<typename T> struct to_kind
-{BOOST_STATIC_CONSTEXPR typename value::kind val = value::undefined;};
+{BOOST_STATIC_CONSTEXPR typename value::kind val = value::undefined_tag;};
 template<typename T>
 BOOST_CONSTEXPR_OR_CONST typename value::kind to_kind<T>::val;
 
@@ -347,7 +347,7 @@ operator<<(std::basic_ostream<charT, traits>& os, value::kind k)
         case value::datetime_tag : {os << "datetime";  return os;}
         case value::array_tag    : {os << "array";     return os;}
         case value::table_tag    : {os << "table";     return os;}
-        case value::undefined    : {os << "undefined"; return os;}
+        case value::undefined_tag: {os << "undefined"; return os;}
         default                  : {os << "unknown";   return os;}
     }
 }
