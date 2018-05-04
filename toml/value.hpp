@@ -29,9 +29,8 @@ struct to_kind;
 
 struct value
 {
-    typedef boost::variant<boost::blank,
-        boolean, integer, floating, string, date, time, datetime, array, table
-            > storage_type;
+    typedef boost::variant<boost::blank, boolean, integer, floating, string,
+            date, time, datetime, offset_datetime, array, table> storage_type;
 
     enum kind
     {
@@ -43,9 +42,10 @@ struct value
         date_tag      = 5,
         time_tag      = 6,
         datetime_tag  = 7,
-        array_tag     = 8,
-        table_tag     = 9,
-        undefined_tag = 10
+        offset_datetime_tag = 8,
+        array_tag     = 9,
+        table_tag     = 10,
+        undefined_tag = 11
     };
 
     value(){}
