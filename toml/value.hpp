@@ -77,22 +77,14 @@ struct value
     value(const char* v,        string::kind_t k): storage_(string(v, k)){}
     value(const std::string& v, string::kind_t k): storage_(string(v, k)){}
 
-    template<typename T>
-    value(const T& v, typename boost::enable_if<is_convertible<T, date>
-            >::type* = 0): storage_(static_cast<date>(v))
-    {}
-    template<typename T>
-    value(const T& v, typename boost::enable_if<is_convertible<T, time>
-            >::type* = 0): storage_(static_cast<time>(v))
-    {}
-    template<typename T>
-    value(const T& v, typename boost::enable_if<is_convertible<T, datetime>
-            >::type* = 0): storage_(static_cast<datetime>(v))
-    {}
-    template<typename T1, typename T2>
-    value(const T1& d, const T2& t, typename boost::enable_if<boost::mpl::and_<
-            is_convertible<T1, date>, is_convertible<T2, time>
-            > >::type* = 0): storage_(datetime(d, t))
+    value(const date& v): storage_(v){}
+    value(const time& v): storage_(v){}
+    value(const datetime& v): storage_(v){}
+    value(const offset_datetime& v): storage_(v){}
+
+    value(const date&     d,  const time& t): storage_(datetime(d, t)){}
+    value(const datetime& dt, const time_zone_ptr tzp)
+        : storage_(offset_datetime(dt, tzp))
     {}
 
     value(const array& v): storage_(v){}
@@ -119,14 +111,14 @@ struct value
 
     template<typename Iterator>
     value(Iterator first, Iterator last, typename boost::enable_if<
-            boost::is_same<typename boost::iterator_value<Iterator>::type, char>
-            >::type* = 0): storage_(string(first, last))
+        boost::is_same<typename boost::iterator_value<Iterator>::type, char>
+        >::type* = 0): storage_(string(first, last))
     {}
 
     template<typename Iterator>
     value(Iterator first, Iterator last, typename boost::enable_if<
-            is_convertible<typename boost::iterator_value<Iterator>::type,value>
-            >::type* = 0): storage_(array(first, last))
+        is_convertible<typename boost::iterator_value<Iterator>::type, value>
+        >::type* = 0): storage_(array(first, last))
     {}
 
     template<typename Iterator>
@@ -159,25 +151,12 @@ struct value
     value& operator=(const char* v)        {storage_ = string(v); return *this;}
     value& operator=(const std::string& v) {storage_ = string(v); return *this;}
 
-    template<typename T>
-    typename boost::enable_if<is_convertible<T, date>, value>::type&
-    operator=(const T& v) {this->storage_ = static_cast<date>(v); return *this;}
-
-    template<typename T>
-    typename boost::enable_if<is_convertible<T, time>, value>::type&
-    operator=(const T& v) {this->storage_ = static_cast<time>(v); return *this;}
-
-    template<typename T>
-    typename boost::enable_if<is_convertible<T, datetime>, value>::type&
-    operator=(const T& v) {storage_ = static_cast<datetime>(v); return *this;}
-
-    template<typename T>
-    typename boost::enable_if<is_convertible<T, array>, value>::type&
-    operator=(const T& v) {this->storage_ = v; return *this;}
-
-    template<typename T>
-    typename boost::enable_if<is_convertible<T, table>, value>::type&
-    operator=(const T& v) {this->storage_ = v; return *this;}
+    value& operator=(const date& v) {this->storage_ = v; return *this;}
+    value& operator=(const time& v) {this->storage_ = v; return *this;}
+    value& operator=(const datetime& v)  {this->storage_ = v; return *this;}
+    value& operator=(const offset_datetime& v) {storage_ = v; return *this;}
+    value& operator=(const array& v) {this->storage_ = v; return *this;}
+    value& operator=(const table& v) {this->storage_ = v; return *this;}
 
 #ifdef BOOST_HAS_RVALUE_REFS
     value& operator=(string&& v)
