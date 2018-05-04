@@ -132,6 +132,7 @@ template<typename T> struct is_tuple_type : boost::false_type {};
 template<typename ... Ts>
 struct is_tuple_type<std::tuple<Ts...> > : boost::true_type {};
 
+// to use toml::get<std::tuple<T1, T2, ...>> in C++11
 template<std::size_t ... Ns> struct index_sequence{};
 
 template<typename IS, std::size_t N> struct push_back_index_sequence{};
