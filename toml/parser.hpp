@@ -47,20 +47,20 @@ bool all_of(const Iterator first, const Iterator last, Predicate pred)
     return true;
 }
 
-inline bool ishex(const char c) BOOST_NOEXCEPT_OR_NOTHROW
+inline bool ishex(const char c)
 {
     return ('0' <= c && c <= '9') ||
            ('A' <= c && c <= 'F') || ('a' <= c && c <= 'f');
 }
-inline bool isdec(const char c) BOOST_NOEXCEPT_OR_NOTHROW
+inline bool isdec(const char c)
 {
     return ('0' <= c && c <= '9');
 }
-inline bool isoct(const char c) BOOST_NOEXCEPT_OR_NOTHROW
+inline bool isoct(const char c)
 {
     return ('0' <= c && c <= '7');
 }
-inline bool isbin(const char c) BOOST_NOEXCEPT_OR_NOTHROW
+inline bool isbin(const char c)
 {
     return ('0' == c || c == '1');
 }
