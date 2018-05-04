@@ -97,9 +97,6 @@ inline std::string read_utf8_codepoint(const std::string& str)
     return character;
 }
 
-// XXX: this funciton is used in the loop in parse_string.
-//      So, unlike the other parse_* functions, it returns an iterator that
-//      points the last element of the escape_sequence for ease.
 template<typename InputIterator>
 result<string, InputIterator>
 parse_escape_sequence(const InputIterator first, const InputIterator last)
@@ -117,13 +114,13 @@ parse_escape_sequence(const InputIterator first, const InputIterator last)
 
     switch(*iter)
     {
-        case '\\': return result_t(string("\\",string::basic),iter,success_t());
-        case '"' : return result_t(string("\"",string::basic),iter,success_t());
-        case 'b' : return result_t(string("\b",string::basic),iter,success_t());
-        case 't' : return result_t(string("\t",string::basic),iter,success_t());
-        case 'n' : return result_t(string("\n",string::basic),iter,success_t());
-        case 'f' : return result_t(string("\f",string::basic),iter,success_t());
-        case 'r' : return result_t(string("\r",string::basic),iter,success_t());
+        case '\\': return result_t(string("\\"), ++iter, success_t());
+        case '"' : return result_t(string("\""), ++iter, success_t());
+        case 'b' : return result_t(string("\b"), ++iter, success_t());
+        case 't' : return result_t(string("\t"), ++iter, success_t());
+        case 'n' : return result_t(string("\n"), ++iter, success_t());
+        case 'f' : return result_t(string("\f"), ++iter, success_t());
+        case 'r' : return result_t(string("\r"), ++iter, success_t());
         case 'u' :
         {
             if(std::distance(iter, last) < 5)
@@ -146,7 +143,7 @@ parse_escape_sequence(const InputIterator first, const InputIterator last)
 
             const std::string unesc =
                 read_utf8_codepoint(std::string(cp_begin, cp_end));
-            return result_t(string(unesc, string::basic), cp_end, success_t());
+            return result_t(string(unesc), cp_end, success_t());
         }
         case 'U':
         {
@@ -170,7 +167,7 @@ parse_escape_sequence(const InputIterator first, const InputIterator last)
 
             const std::string unesc =
                 read_utf8_codepoint(std::string(cp_begin, cp_end));
-            return result_t(string(unesc, string::basic), cp_end, success_t());
+            return result_t(string(unesc), cp_end, success_t());
         }
         default:
         {
@@ -650,18 +647,20 @@ parse_basic_string(const InputIterator first, const InputIterator last)
     {
         if(*iter == '"')
         {
-            return result_t(string(token, string::basic), iter, success_t());
+            return result_t(string(token, string::basic), ++iter, success_t());
         }
         else if(*iter == '\\')
         {
             const result_t unesc = parse_escape_sequence(iter, last);
             if(unesc.is_err()) {return unesc;}
             token += unesc.unwrap();
-            iter = unesc.iterator();
-            // XXX after this, the iterator will be incremented.
-            // read the comment at the front of parse_escape_sequence.
+            InputIterator unesc_end = unesc.iterator();
+            // XXX after this, the iterator will be incremented. so retrace by 1
+            const typename std::iterator_traits<InputIterator>::difference_type
+                len_escape_sequence = std::distance(iter, unesc_end);
+            std::advance(iter, len_escape_sequence - 1);
         }
-        else if(0x00 <= *iter && *iter <= 0x1F || *iter == 0x7F)
+        else if((0x00 <= *iter && *iter <= 0x1F) || *iter == 0x7F)
         {
             const int ch = *iter;
             std::ostringstream oss; oss << std::hex << ch;
