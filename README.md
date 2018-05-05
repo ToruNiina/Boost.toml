@@ -356,18 +356,19 @@ toml::get<toml::datetime>(dt) += toml::days(10);
 `toml::value` is based on a `boost::variant` that contains following toml value
 types.
 
-| toml value type | boost.toml type                                         |
-|:----------------|:--------------------------------------------------------|
-| -               | `boost::blank` (uninitialized type)                     |
-| `boolean`       | `bool`                                                  |
-| `integer`       | `boost::int64_t`                                        |
-| `float`         | `double`                                                |
-| `string`        | `struct {std::string str; enum {basic, literal} kind;}` |
-| `date`          | `boost::gregorian::date`                                |
-| `time`          | `boost::posix_time::time_duration`                      |
-| `datetime`      | `boost::posix_time::ptime`                              |
-| `array`         | `boost::container::vector<value>`                       |
-| `table`         | `boost::container::flat_map<key, value>`                |
+| toml value type   | boost.toml type                                         |
+|:------------------|:--------------------------------------------------------|
+| -                 | `boost::blank` (uninitialized type)                     |
+| `boolean`         | `bool`                                                  |
+| `integer`         | `boost::int64_t`                                        |
+| `floating`        | `double`                                                |
+| `string`          | `struct {std::string str; enum {basic, literal} kind;}` |
+| `date`            | `boost::gregorian::date`                                |
+| `time`            | `boost::posix_time::time_duration`                      |
+| `datetime`        | `boost::posix_time::ptime`                              |
+| `offset_datetime` | `boost::local_time::local_date_time`                    |
+| `array`           | `boost::container::vector<value>`                       |
+| `table`           | `boost::container::flat_map<key, value>`                |
 
 ### `toml::string` and `basic`, `literal` flags
 
