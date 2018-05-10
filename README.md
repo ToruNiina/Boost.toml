@@ -27,6 +27,7 @@ __NOTE__: This library is not a part of Boost C++ Library.
     - [`toml::string` and `basic`, `literal` flags](#tomlstring-and-basic-literal-flags)
     - [map class that represents `toml::table`](#map-class-that-represents-tomltable)
     - [why not STL container?](#why-not-stl-container)
+    - [types that are convertible from toml value by using `toml::get`](#types-that-are-convertible-from-toml-value-by-using-tomlget)
 - [synopsis](#synopsis)
 - [Licensing terms](#licensing-terms)
 
