@@ -410,6 +410,29 @@ contain recursive data type.
 This feature removes the neccesity of using pointers to implement `toml::value`
 that is defined recursively.
 
+### types that are convertible from toml value by using `toml::get`
+
+| toml value type   | convertible types                                                            |
+|:------------------|:-----------------------------------------------------------------------------|
+| `boolean`         | `bool` only                                                                  |
+| `integer`         | types that makes `boost::is_integral::value` true (excepting `bool`).        |
+| `floating`        | types that makes `boost::is_floating_point::value` true.                     |
+| `string`          | `std::string`, `std::string_view`, `boost::string_view`, `boost::string_ref` |
+| `date`            | -                                                                            |
+| `time`            | -                                                                            |
+| `datetime`        | -                                                                            |
+| `offset_datetime` | -                                                                            |
+| `array`           | container classes (see below). |
+| `table`           | map-like classes (see below).  |
+
+`toml::array` can be converted to a class that ...
+* has member types named `iterator` and `value_type`
+* does not have a member type named `key_type` or `mapped_type`
+* is not one of the `std::string`, `std::string_view`, `boost::string_view` or `boost::string_ref`
+
+`toml::table` can be converted to a class that ...
+* has member types named `iterator`, `value_type`, `key_type` and `mapped_type`.
+
 ## Synopsis
 
 TODO
