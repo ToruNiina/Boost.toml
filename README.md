@@ -440,7 +440,7 @@ TODO
 
 ## Licensing Terms
 
-This library is distributed under the MIT License.
+This library is distributed under the Boost Software License.
 
 - copyright (c) 2018, Toru Niina
 
