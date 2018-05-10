@@ -216,7 +216,7 @@ std::tuple<int, int, int, int> t = toml::get<std::tuple<int, int, int, int>>(v);
 
 currently, `boost::tuple` is not supported for this purpose.
 
-### getting `toml::table`
+### getting `toml::table` and Array of Table
 
 Array of Tables can be obtained as the same way described before.
 
