@@ -13,13 +13,13 @@ __NOTE__: This library is not a part of Boost C++ Library.
 ## Table of Contents
 
 - [example code](#example-code)
-- [confirming value type](#confirming-value-type)
 - [getting toml values](#getting-toml-values)
     - [basic usage of `toml::get`](#basic-usage-of-tomlget)
     - [getting `toml::array`](#getting-tomlarray)
     - [getting `toml::table`](#getting-tomltable)
     - [`toml::array` of `toml::array` having different types each other](#tomlarray-of-tomlarray-having-different-types-each-other)
     - [performance of getting `toml::array` or `toml::table`](#performance-of-getting-tomlarray-or-tomltable)
+- [confirming value type](#confirming-value-type)
 - [visiting value that has unknown type](#visiting-value-that-has-unknown-type)
 - [formatting toml values](#formatting-toml-values)
 - [datetime operation](#datetime-operation)
