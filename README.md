@@ -116,51 +116,6 @@ int main()
 }
 ```
 
-## confirming value type
-
-If you pass wrong template argument to `toml::get`, `toml::bad_get` (that is
-derived from `std::exception`) will be thrown. Before using `toml::get`, it
-should be known what type does the value have.
-
-```cpp
-toml::value v(3.14);
-std::string s = toml::get<std::string>(v);
-
-// exception thrown. the message would be something like this.
-// terminate called after throwing an instance of 'toml::bad_get'
-//   what():  toml::get: toml value has type `float`, but type `std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >` is specified.
-```
-
-When you cannot know actually what type is contained in the data file,
-`enum` value representing type information is useful.
-
-```cpp
-toml::table data = toml::parse("sample.toml");
-const toml::value& v = data["some_value"]; // what type does it have ???
-
-std::cout << v.which() << std::endl; // outputs "integer" or something like that
-
-switch(v.which())
-{
-    case toml::value::integer_tag  : /* do some stuff */; break;
-    case toml::value::string_tag   : /* do some stuff */; break;
-    // ...
-}
-```
-
-the complete set of this `enum` values is found in [synopsis](#synopsis).
-
-`toml::value` also has `is()` member function that checks the type.
-
-```cpp
-if(v.is(toml::value::string_tag)) {/* do some stuff */}
-```
-
-But it is painful to write `switch-case` every time.
-Boost.toml provides a way to visit contained value without knowing its value.
-
-See also [visiting value that has unknown type](#visiting-value-that-has-unknown-type).
-
 ## getting toml values
 
 Boost.toml provides really powerful function to get a value from TOML data.
@@ -317,6 +272,51 @@ toml::array& ar = toml::get<toml::array>(v);
 
 Although it is a bit boring to call `toml::get` for all the elements in the
 array, but there is a tradeoff between speed and usability.
+
+## confirming value type
+
+If you pass wrong template argument to `toml::get`, `toml::bad_get` (that is
+derived from `std::exception`) will be thrown. Before using `toml::get`, it
+should be known what type does the value have.
+
+```cpp
+toml::value v(3.14);
+std::string s = toml::get<std::string>(v);
+
+// exception thrown. the message would be something like this.
+// terminate called after throwing an instance of 'toml::bad_get'
+//   what():  toml::get: toml value has type `float`, but type `std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >` is specified.
+```
+
+When you cannot know actually what type is contained in the data file,
+`enum` value representing type information is useful.
+
+```cpp
+toml::table data = toml::parse("sample.toml");
+const toml::value& v = data["some_value"]; // what type does it have ???
+
+std::cout << v.which() << std::endl; // outputs "integer" or something like that
+
+switch(v.which())
+{
+    case toml::value::integer_tag  : /* do some stuff */; break;
+    case toml::value::string_tag   : /* do some stuff */; break;
+    // ...
+}
+```
+
+the complete set of this `enum` values is found in [synopsis](#synopsis).
+
+`toml::value` also has `is()` member function that checks the type.
+
+```cpp
+if(v.is(toml::value::string_tag)) {/* do some stuff */}
+```
+
+But it is painful to write `switch-case` every time.
+Boost.toml provides a way to visit contained value without knowing its value.
+
+See also [visiting value that has unknown type](#visiting-value-that-has-unknown-type).
 
 ## visiting value that has unknown type
 
