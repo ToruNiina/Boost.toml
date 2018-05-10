@@ -312,6 +312,8 @@ the complete set of this `enum` values is found in [synopsis](#synopsis).
 
 ```cpp
 if(v.is(toml::value::string_tag)) {/* do some stuff */}
+// or
+if(v.is<toml::integer>()) {/* do some stuff */}
 ```
 
 But it is painful to write `switch-case` every time.
