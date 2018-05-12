@@ -78,24 +78,24 @@ int main()
     // you can get toml values by toml::get function.
     const std::string title = toml::get<std::string>(file.at("title"));
 
-    // it returns lvalue reference if you specify exact toml::* types
-    const toml::table& owner = toml::get<toml::table   >(file.at("owner"));
-    const std::string  name  = toml::get<std::string   >(owner.at("name"));
-    const toml::datetime dob = toml::get<toml::datetime>(owner.at("dob"));
+    // it returns lvalue reference when no conversion is needed
+    const toml::table&  owner = toml::get<toml::table>(file.at("owner"));
+    const std::string&  name  = toml::get<std::string>(owner.at("name"));
+    const auto&         dob   = toml::get<toml::offset_datetime>(owner.at("dob"));
 
     const auto& database = toml::get<toml::table>(file.at("database"));
-    // you can use std::string_view if you have c++17 compiler.
+    // you can use a std::string_view if you have a c++17 compiler.
     const auto  server = toml::get<std::string_view>(database.at("server"));
-    // you can get toml::array as your favorite container type.
+    // you can get a toml::array as your favorite container type.
     const auto  ports = toml::get<std::vector<int>>(database.at("ports"));
-    // you can cast types if they are convertible (excepting Boolean -> Integer)
+    // you can cast types if they are convertible
     const auto  connection_max = toml::get<std::size_t>(database.at("connection_max"));
     const auto  enabled = toml::get<bool>(database.at("enabled"));
 
-    // array of table is simply an `array<table>`.
-    const auto servers  = toml::get<std::vector<toml::table>>(file.at("servers"));
+    // an array of table is simply an `array<table>`.
+    const auto servers = toml::get<std::vector<toml::table>>(file.at("servers"));
 
-    // you can use boost::string_view if you don't have c++17 compatible compiler
+    // you can use boost::string_view also.
     const auto name_alpha = toml::get<boost::string_view>(servers.at(0).at("name"));
     const auto ip_alpha   = toml::get<boost::string_view>(servers.at(0).at("ip"));
     const auto dc_alpha   = toml::get<boost::string_view>(servers.at(0).at("dc"));
@@ -126,8 +126,8 @@ Boost.toml provides really powerful function to get a value from TOML data.
 You can `get` values from toml file by using `toml::get<T>` function.
 
 ```cpp
-toml::value v1(42);
 // you can get a reference when you get as the exact toml type
+toml::value v1(42);
 toml::integer& i_ref = toml::get<toml::integer>(v1);
 i_ref = 6 * 9; // v1 will be 54.
 
@@ -143,13 +143,15 @@ If you pass a convertible type (like `int` for `toml::integer`) to `toml::get`'s
 template argument, it casts the value to the type.
 In that case, you can't get a lvalue reference that points to the contained
 value because it returns `prvalue`.
+See [this section](#types-that-are-convertible-from-toml-value-by-using-tomlget)
+for more information about type conversions.
 
 If you pass a wrong type (like `std::string` for `toml::integer`) to
 `toml::get`, it will throw `boost::bad_get`.
 
 ### getting `toml::array`
 
-You can get `toml::array` as your favorite array type.
+You can get a `toml::array` as your favorite array type.
 
 ```cpp
 toml::value v{1, 2, 3, 4, 5};
