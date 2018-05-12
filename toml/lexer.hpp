@@ -83,11 +83,61 @@ typedef either<lex_special_float,
 
 typedef sequence<character<'t'>, sequence<character<'r'>,
         sequence<character<'u'>, character<'e'> > >
-        > lex_true;
+    > lex_true;
 typedef sequence<character<'f'>, sequence<character<'a'>,
         sequence<character<'l'>, sequence<character<'s'>, character<'e'> > > >
-        > lex_false;
+    > lex_false;
 typedef either<lex_true, lex_false> lex_boolean;
+
+// ===========================================================================
+
+typedef repeat<lex_digit, exactly<4> > lex_date_fullyear;
+typedef repeat<lex_digit, exactly<2> > lex_date_month;
+typedef repeat<lex_digit, exactly<2> > lex_date_mday;
+
+typedef either<character<'T'>, either<character<'t'>, character<' '> >
+    > lex_time_delim;
+typedef repeat<lex_digit, exactly<2> > lex_time_hour;
+typedef repeat<lex_digit, exactly<2> > lex_time_minute;
+typedef repeat<lex_digit, exactly<2> > lex_time_second;
+typedef sequence<character<'.'>, repeat<lex_digit, at_least<1> >
+    > lex_time_secfrac;
+typedef sequence<either<character<'+'>, character<'-'> >,
+        sequence<lex_time_hour, sequence<character<':'>, lex_time_minute> >
+    > lex_time_numoffset;
+typedef either<either<character<'Z'>, character<'z'> >, lex_time_numoffset
+    > lex_time_offset;
+
+typedef sequence<lex_time_hour, sequence<
+    character<':'>, sequence<lex_time_minute, sequence<character<':'>,
+    sequence<lex_time_second, maybe<lex_time_secfrac> >
+    > > > > lex_partial_time;
+typedef sequence<lex_date_fullyear, sequence<character<'-'>, sequence<
+    lex_date_month, sequence<character<'-'>, lex_date_mday>
+    > > > lex_full_date;
+typedef sequence<lex_partial_time, lex_time_offset
+    > lex_full_time;
+
+typedef sequence<lex_full_date, sequence<lex_time_delim, lex_full_time>
+    > lex_offset_date_time;
+typedef sequence<lex_full_date, sequence<lex_time_delim, lex_partial_time>
+    > lex_local_date_time;
+typedef lex_full_date lex_local_date;
+typedef lex_partial_time lex_local_time;
+
+// ===========================================================================
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
