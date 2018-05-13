@@ -13,6 +13,12 @@ namespace toml
 namespace detail
 {
 
+typedef either<character<' '>, character<'\t'> > lex_wschar;
+typedef repeat<lex_wschar, unlimited> lex_ws;
+
+typedef either<character<'\n'>, sequence<character<'\r'>, character<'\n'> >
+    > lex_newline;
+
 typedef in_range<'a', 'z'> lex_lower;
 typedef in_range<'A', 'Z'> lex_upper;
 typedef either<lex_lower, lex_upper> lex_alpha;
@@ -127,25 +133,80 @@ typedef lex_partial_time lex_local_time;
 
 // ===========================================================================
 
+typedef character<'"'> lex_quotation_mark;
+typedef exclude<either<in_range<0x00, 0x1F>, either<character<0x22>,
+        either<character<0x5C>, character<0x7F> > > >
+    > lex_basic_unescaped;
+typedef character<'\\'> lex_escape;
+typedef either<character<'"'>,
+        either<character<'\\'>,
+        either<character<'/'>,
+        either<character<'b'>,
+        either<character<'f'>,
+        either<character<'n'>,
+        either<character<'r'>,
+        either<character<'t'>,
+        either<sequence<character<'u'>, repeat<lex_hexdig, exactly<4> > >,
+        either<sequence<character<'U'>, repeat<lex_hexdig, exactly<8> > >
+        > > > > > > > > >
+    > lex_escape_seq_char;
+typedef sequence<lex_escape, lex_escape_seq_char> lex_escaped;
+typedef either<lex_basic_unescaped, lex_escaped> lex_basic_char;
+typedef sequence<lex_quotation_mark, sequence<repeat<lex_basic_char, unlimited>,
+            lex_quotation_mark>
+    > lex_basic_string;
 
+typedef repeat<lex_quotation_mark, exactly<3>
+    > lex_ml_basic_string_delim;
+typedef exclude<either<in_range<0x00, 0x1F>,
+        either<character<0x5C>, character<0x7F> > >
+    > lex_ml_basic_unescaped;
+typedef either<lex_ml_basic_unescaped, lex_escaped
+    > lex_ml_basic_char;
+typedef repeat<either<lex_ml_basic_char, either<lex_newline,
+        sequence<lex_escape, sequence<lex_ws, lex_newline> > > >, unlimited
+    > lex_ml_basic_body;
+typedef sequence<lex_ml_basic_string_delim, sequence<lex_ml_basic_body,
+        lex_ml_basic_string_delim>
+    > lex_ml_basic_string;
 
+typedef exclude<either<in_range<0x00, 0x08>,
+        either<in_range<0x10, 0x19>, character<0x27> > >
+    > lex_literal_char;
+typedef character<'\''> lex_apostrophe;
+typedef sequence<lex_apostrophe, sequence<repeat<lex_literal_char, unlimited>,
+            lex_apostrophe>
+    > lex_literal_string;
 
+typedef repeat<lex_apostrophe, exactly<3>
+    > lex_ml_literal_string_delim;
+typedef exclude<either<in_range<0x00, 0x08>, in_range<0x10, 0x1F> >
+    > lex_ml_literal_char;
+typedef repeat<either<lex_ml_literal_char, lex_newline>, unlimited
+    > lex_ml_literal_body;
+typedef sequence<lex_ml_literal_string_delim, sequence<lex_ml_literal_char,
+        lex_ml_literal_string_delim>
+    > lex_ml_literal_string;
 
+// ===========================================================================
 
+typedef character<'#'> lex_comment_start_symbol;
+typedef either<character<'\t'>, exclude<in_range<0x00, 0x19>
+    > lex_non_eol;
+typedef sequence<lex_comment_start_symbol, repeat<lex_non_eol, unlimited>
+    > lex_comment;
 
+typedef sequence<lex_ws, sequence<character<'.'>, lex_ws> > lex_dot_sep;
 
-
-
-
-
-
-
-
-
-
-
-
-
+typedef repeat<either<lex_alpha, either<lex_digit,
+        either<character<'-'>, character<'_'> > > >, at_least<1>
+    > lex_unquoted_key;
+typedef either<lex_basic_string, lex_literal_string> lex_quoted_key;
+typedef either<lex_unquoted_key, lex_dotted_key> lex_simple_key;
+typedef sequence<lex_simple_key,
+        repeat<sequence<lex_dot_sep, lex_simple_key>, at_least<1> >
+    > lex_dotted_key;
+typedef either<lex_simple_key, lex_dotted_key> lex_key;
 
 } // detail
 } // toml
