@@ -382,19 +382,19 @@ toml::get<toml::datetime>(dt) += toml::days(10);
 `toml::value` is based on a `boost::variant` that contains following toml value
 types.
 
-| toml value type   | boost.toml type                                         |
-|:------------------|:--------------------------------------------------------|
-| -                 | `boost::blank` (uninitialized type)                     |
-| `boolean`         | `bool`                                                  |
-| `integer`         | `boost::int64_t`                                        |
-| `floating`        | `double`                                                |
-| `string`          | `struct {std::string str; enum {basic, literal} kind;}` |
-| `date`            | `boost::gregorian::date`                                |
-| `time`            | `boost::posix_time::time_duration`                      |
-| `datetime`        | `boost::posix_time::ptime`                              |
-| `offset_datetime` | `boost::local_time::local_date_time`                    |
-| `array`           | `boost::container::vector<value>`                       |
-| `table`           | `boost::container::flat_map<key, value>`                |
+| toml value type   | boost.toml type                                                |
+|:------------------|:---------------------------------------------------------------|
+| -                 | `boost::blank` (uninitialized type)                            |
+| `boolean`         | `bool`                                                         |
+| `integer`         | `boost::int64_t`                                               |
+| `floating`        | `double`                                                       |
+| `string`          | `struct {std::string str; enum kind_t {basic, literal} kind;}` |
+| `date`            | `boost::gregorian::date`                                       |
+| `time`            | `boost::posix_time::time_duration`                             |
+| `datetime`        | `boost::posix_time::ptime`                                     |
+| `offset_datetime` | `boost::local_time::local_date_time`                           |
+| `array`           | `boost::container::vector<value>`                              |
+| `table`           | `boost::container::flat_map<key, value>`                       |
 
 ### `toml::string` and `basic`, `literal` flags
 
@@ -433,12 +433,14 @@ that is defined recursively.
 | `integer`         | types that makes `boost::is_integral::value` true (excepting `bool`).        |
 | `floating`        | types that makes `boost::is_floating_point::value` true.                     |
 | `string`          | `std::string`, `std::string_view`, `boost::string_view`, `boost::string_ref` |
-| `date`            | -                                                                            |
-| `time`            | -                                                                            |
-| `datetime`        | -                                                                            |
-| `offset_datetime` | -                                                                            |
+| `date`            | -                              |
+| `time`            | -                              |
+| `datetime`        | -                              |
+| `offset_datetime` | -                              |
 | `array`           | container classes (see below). |
 | `table`           | map-like classes (see below).  |
+
+`toml::string` can safely be converted to an lvalue of `std::string`.
 
 `toml::array` can be converted to a class that ...
 * has member types named `iterator` and `value_type`
