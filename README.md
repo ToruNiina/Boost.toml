@@ -398,7 +398,7 @@ types.
 
 ### `toml::string` and `basic`, `literal` flags
 
-`toml::string` has an `enum` to represent `basic_string` and `literal_string`.
+`toml::string` has an `enum kind_t` to represent `basic_string` and `literal_string`.
 But it can be converted to std::string automatically, so the users do not need
 to consider about the difference between `toml::string` and `std::string`.
 
@@ -406,6 +406,7 @@ an enum value can be passed to make `toml::value` that contains `toml::string`.
 It affects on the output format. By default, it is set as `basic_string`.
 
 ```cpp
+toml::value v0("foo"); // It will be a basic string by default.
 toml::value v1("foo", toml::string::basic);
 toml::value v2("bar", toml::string::literal);
 ```
@@ -449,7 +450,108 @@ that is defined recursively.
 
 ## Synopsis
 
-TODO
+### `toml::value`
+
+```cpp
+struct value
+{
+    typedef boost::variant<boost::blank, boolean, integer, floating, string,
+            date, time, datetime, offset_datetime, array, table> storage_type;
+
+    enum kind
+    {
+        empty_tag           = 0,
+        boolean_tag         = 1,
+        integer_tag         = 2,
+        float_tag           = 3,
+        string_tag          = 4,
+        date_tag            = 5,
+        time_tag            = 6,
+        datetime_tag        = 7,
+        offset_datetime_tag = 8,
+        array_tag           = 9,
+        table_tag           = 10,
+        undefined_tag       = 11
+    };
+
+    value();
+    ~value();
+    value(const value& v);
+    value(value&& v);
+    value& operator=(const value& v);
+    value& operator=(value&& v); // after c++11.
+
+    // these are enabled for each TOML type by using SFINAE or just overloading.
+    template<typename T> value(const T& v);
+    template<typename T> value& operator=(const T& v);
+
+    value(const char* v,        string::kind_t k);
+    value(const std::string& v, string::kind_t k);
+    value(const date&     d,    const time& t);
+    value(const datetime& dt,   const time_zone_ptr tzp);
+
+    // enabled after c++11.
+    value(std::string&& v);
+    value(toml::array&& v);
+    value(toml::table&& v);
+    value& operator=(std::string&& v);
+    value& operator=(toml::array&& v);
+    value& operator=(toml::table&& v);
+
+    // enabled after c++11.
+    template<typename T>
+    value(std::initializer_list<T> v);
+    value(std::initializer_list<std::pair<key, value>> v);
+
+    // enabled for each toml type (string, array, or table).
+    template<typename Iterator>
+    value(Iterator first, Iterator last);
+
+    int  index() const noexcept;
+    kind which() const noexcept;
+
+    template<typename T>
+    bool is()       const noexcept;
+    bool is(kind k) const noexcept;
+
+    template<typename T> T&       get();
+    template<typename T> T const& get();
+
+    void swap(value& rhs);
+
+    template<typename Visitor>
+    /* result type of Visitor */ apply_visitor(Visitor v);
+    template<typename Visitor>
+    /* result type of Visitor */ apply_visitor(Visitor v) const;
+
+    bool operator==(const value& r) const;
+    bool operator!=(const value& r) const;
+    bool operator< (const value& r) const;
+    bool operator> (const value& r) const;
+    bool operator<=(const value& r) const;
+    bool operator>=(const value& r) const;
+};
+
+void swap(value& lhs, value& rhs);
+
+template<typename T> T&       get(value&);
+template<typename T> T const& get(value const&);
+
+template<typename Visitor>
+/* result type of Visitor */ apply_visitor(Visitor, value&);
+template<typename Visitor>
+/* result type of Visitor */ apply_visitor(Visitor, value const&);
+
+template<typename Visitor>
+/* result type of Visitor */ visit(Visitor, value&);
+template<typename Visitor>
+/* result type of Visitor */ visit(Visitor, value const&);
+
+// output value::kind.
+template<typename charT, typename traits>
+std::basic_ostream<charT, traits>&
+operator<<(std::basic_ostream<charT, traits>& os, value::kind k);
+```
 
 ## Licensing Terms
 
