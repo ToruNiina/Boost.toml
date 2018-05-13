@@ -208,6 +208,17 @@ typedef sequence<lex_simple_key,
     > lex_dotted_key;
 typedef either<lex_simple_key, lex_dotted_key> lex_key;
 
+typedef character<'['> lex_std_table_open;
+typedef character<']'> lex_std_table_close;
+typedef sequence<lex_std_table_open, sequence<lex_key, lex_std_table_close>
+    > lex_std_table;
+
+typedef sequence<lex_std_table_open,  lex_std_table_open>  lex_array_table_open;
+typedef sequence<lex_std_table_close, lex_std_table_close
+    > lex_array_table_close;
+typedef sequence<lex_array_table_open, sequence<lex_key, lex_array_table_close>
+    > lex_std_table;
+
 } // detail
 } // toml
 #endif // TOML_LEXER_HPP
