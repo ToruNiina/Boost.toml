@@ -428,6 +428,30 @@ contain recursive data type.
 This feature removes the neccesity of using pointers to implement `toml::value`
 that is defined recursively. It will make the whole process faster.
 
+NOTE:
+
+`toml::value` is a recursively defined data type. `toml::array` is an
+array of `toml::value`, and it is also one of the types that `toml::value`
+contains.
+
+The example implementation that shows the core part of this idea will be
+like this.
+
+```cpp
+struct value
+{
+    boost::variant<string, integer, // ...
+            boost::container::vector<value> // value contains itself inside!
+        > storage;
+};
+```
+
+In C++17, "Minimal incomplete type support for standard containers" is
+incorporated into the standard specification.
+
+But to realize this implementation before C++17, it may be the best way
+to use Boost.Container.
+
 ### types that are convertible from toml value by using `toml::get`
 
 | toml value type   | convertible types                                                            |
