@@ -560,7 +560,7 @@ operator<<(std::basic_ostream<charT, traits>& os, value::kind k);
 
 ## Licensing Terms
 
-This library is distributed under the Boost Software License.
+This library is distributed under [the Boost Software License](LICENSE).
 
 - copyright (c) 2018, Toru Niina
 
