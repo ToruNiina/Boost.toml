@@ -147,7 +147,16 @@ See [this section](#types-that-are-convertible-from-toml-value-by-using-tomlget)
 for more information about type conversions.
 
 If you pass a wrong type (like `std::string` for `toml::integer`) to
-`toml::get`, it will throw `boost::bad_get`.
+`toml::get`, it will throw `toml::bad_get`.
+
+```cpp
+toml::value v(42);
+std::string s = toml::get<std::string>(v);
+
+// exception thrown. the message would be something like this.
+// terminate called after throwing an instance of 'toml::bad_get'
+//   what():  toml::get: toml value has type `integer`, but type `std::basic_string<char, std::char_traits<char>, std::allocator<char> >` is specified.
+```
 
 ### getting `toml::array`
 
