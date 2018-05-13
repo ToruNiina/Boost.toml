@@ -119,19 +119,19 @@ int main()
 
 ## getting toml values
 
-Boost.toml provides really powerful function to get a value from TOML data.
+Boost.toml provides a really powerful function to get a value from TOML data.
 
 ### basic usage of `toml::get`
 
-You can `get` values from toml file by using `toml::get<T>` function.
+You can `get` values from a toml file by using `toml::get<T>` function.
 
 ```cpp
-// you can get a reference when you get as the exact toml type
+// you can get a reference when you `get` as an exact toml type
 toml::value v1(42);
 toml::integer& i_ref = toml::get<toml::integer>(v1);
 i_ref = 6 * 9; // v1 will be 54.
 
-// you can cast the value if they are convertible
+// you can get a value as non-toml type if they are convertible.
 std::uint32_t i = toml::get<std::uint32_t>(v1); // 54
 
 // to avoid deep-copy, it is useful to get const reference.
@@ -188,6 +188,7 @@ currently, `boost::tuple` is not supported for this purpose.
 Array of Tables can be obtained as the same way described before.
 
 ```cpp
+// it is just an array of table. clear, no?
 std::vector<toml::table> tables = toml::get<std::vector<toml::table> >(v);
 ```
 
@@ -203,7 +204,7 @@ auto bst_umap = toml::get<boost::unordered_map<toml::key, toml::value> >(v);
 ```
 
 __NOTE__: `toml::table` is an alias of `boost::container::flat_map`.
-So it has all the functionality that `boost::container::flat_map` has.
+So it has all the functionalities that `boost::container::flat_map` has.
 In most cases, the conversion is not needed.
 
 ### `toml::array` of `toml::array` having different types each other
@@ -214,22 +215,22 @@ Consider that you have this toml file.
 array = [[1, 2, 3], ["foo", "bar", "baz"]]
 ```
 
-What is the corresponding C++ type? If you know about the length and the type of
-array before reading it, you can use `std::pair` or `std::tuple`.
+What is the corresponding C++ type? If you know about the number of the elements
+and the type of elements before reading it, you can use `std::pair` or `std::tuple`.
 
 ```cpp
 auto pr  = toml::get<std::pair <std::vector<int>, std::vector<std::string>>>(v);
 auto tpl = toml::get<std::tuple<std::vector<int>, std::vector<std::string>>>(v);
 ```
 
-But generally, you cannot know the length of array and the type of array element
-in toml file. In that case, `toml::array` or `std::vector<toml::value>`
-can be used (actually, `toml::array` is just an alias of
-`boost::container::vector<toml::value>`, so in this case the conversion might
+But generally, you cannot know the length of the array and the type of the elements
+in toml file before reading it. In that case, `toml::array` or
+`std::vector<toml::value>` can be used (actually, `toml::array` is just an alias
+of `boost::container::vector<toml::value>`, so in this case the conversion might
 not be needed).
 
 ```cpp
-const toml::array& a = toml::get<toml::array>(v); // get without copy
+const toml::array& a = toml::get<toml::array>(v);
 
 std::vector<int>    a1 = toml::get<std::vector<int>        >(a.at(0));
 std::vector<string> a2 = toml::get<std::vector<std::string>>(a.at(1));
@@ -246,8 +247,8 @@ std::string a2 = toml::get<std::string>(a.at(1).at(0)); // "foo"
 
 ### performance of getting `toml::array` or `toml::table`
 
-Because `toml::get` does type-casting when you pass your favorite container to
-`toml::get`, it essentially does the same thing as following.
+Because `toml::get` casts the value when you pass your favorite container to
+`toml::get`, it essentially does the same thing as the following.
 
 ```cpp
 std::vector<int> get_int_vec(const toml::value& v)
@@ -271,19 +272,21 @@ std::map<toml::key, toml::value> get_std_map(const toml::value& v)
 }
 ```
 
-If the array or table has many many elements, it will take time because it
-constructs completely new array or table.
+If the array or table has many many elements, it will take long time because it
+constructs completely new array or table and deeply copy all the elements.
 
-Sometimes it is intolerable.
-In that case, you can get them as a (const) reference to avoid deep-copy.
+In some cases, it is intolerable.
+
+To avoid deep copy, you can get them as a (const) reference.
 
 ```cpp
 toml::value  v{1,2,3,4,5};
 toml::array& ar = toml::get<toml::array>(v);
+std::int64_t i  = toml::get<std::int64_t>(ar.at(0));
 ```
 
 Although it is a bit boring to call `toml::get` for all the elements in the
-array, but there is a tradeoff between speed and usability.
+array, but there is a tradeoff between speed and easiness.
 
 ## confirming value type
 
@@ -423,7 +426,7 @@ including it or as a compiler flag.
 Because `Boost.Container` allows to contain incomplete types. So it allows to
 contain recursive data type.
 This feature removes the neccesity of using pointers to implement `toml::value`
-that is defined recursively.
+that is defined recursively. It will make the whole process faster.
 
 ### types that are convertible from toml value by using `toml::get`
 
