@@ -5,8 +5,6 @@
 #ifndef TOML_COMBINATOR_HPP
 #define TOML_COMBINATOR_HPP
 #include <boost/optional.hpp>
-#include <boost/optional/optional_io.hpp>
-#include <iostream>
 #include <string>
 
 namespace toml
@@ -78,7 +76,7 @@ struct sequence
 };
 
 template<typename T1, typename T2>
-struct either 
+struct either
 {
     template<typename InputIterator>
     static boost::optional<std::string>
@@ -94,7 +92,7 @@ struct either
 };
 
 template<typename T>
-struct maybe 
+struct maybe
 {
     template<typename InputIterator>
     static boost::optional<std::string>
