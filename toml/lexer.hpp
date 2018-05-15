@@ -188,6 +188,10 @@ typedef sequence<lex_ml_literal_string_delim, sequence<lex_ml_literal_char,
         lex_ml_literal_string_delim>
     > lex_ml_literal_string;
 
+typedef either<either<lex_ml_basic_string,   lex_basic_string>,
+               either<lex_ml_literal_string, lex_literal_string>
+    > lex_string;
+
 // ===========================================================================
 
 typedef character<'#'> lex_comment_start_symbol;
