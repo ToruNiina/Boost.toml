@@ -28,7 +28,7 @@ typedef double                             floating;
 // typedef string                          string;
 typedef boost::gregorian::date             date;
 typedef boost::posix_time::time_duration   time;
-typedef boost::posix_time::ptime           datetime;
+typedef boost::posix_time::ptime           local_datetime;
 typedef boost::local_time::time_zone_ptr   time_zone_ptr;
 typedef boost::local_time::local_date_time offset_datetime;
 typedef boost::container::vector<value>    array;
