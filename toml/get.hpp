@@ -15,14 +15,46 @@ struct bad_get : public std::exception
 {
     bad_get(const std::string& mes): message_(mes){}
     ~bad_get() BOOST_NOEXCEPT_OR_NOTHROW {}
-    const char * what() const BOOST_NOEXCEPT_OR_NOTHROW {return message_.c_str();}
+    const char * what() const BOOST_NOEXCEPT_OR_NOTHROW
+    {return message_.c_str();}
 
   private:
     std::string message_;
 };
 
-// toml::get<exact-toml-types> is defined in toml/value.hpp.
-// in this file, get<convertible-types> are defined.
+// non-conversion. conversion for datetime is provided in a different way
+// to support conversion like date -> datetime (0:00), time -> datetime(today, local)
+template<typename T>
+inline typename boost::enable_if<is_toml_type<T>, T>::type&
+get(value& v)
+{
+    try
+    {
+        return v.template get<T>();
+    }
+    catch(boost::bad_get const& bg)
+    {
+        throw bad_get((boost::format("toml::get: toml value has type `%1%`, "
+            "but type `%2%` is specified.") % v.which() %
+            boost::typeindex::type_id<T>().pretty_name()).str());
+    }
+}
+
+template<typename T>
+inline typename boost::enable_if<is_toml_type<T>, T>::type const&
+get(value const& v)
+{
+    try
+    {
+        return v.template get<T>();
+    }
+    catch(boost::bad_get const& bg)
+    {
+        throw bad_get((boost::format("toml::get: toml value has type `%1%`, "
+            "but type `%2%` is specified.") % v.which() %
+            boost::typeindex::type_id<T>().pretty_name()).str());
+    }
+}
 
 // toml::string -> string, returning lvalue.
 template<typename T>

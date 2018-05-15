@@ -229,18 +229,6 @@ inline void swap(value& lhs, value& rhs)
     lhs.swap(rhs);
     return;
 }
-template<typename T>
-inline typename boost::enable_if<is_toml_type<T>, T>::type&
-get(value& v)
-{
-    return v.template get<T>();
-}
-template<typename T>
-inline typename boost::enable_if<is_toml_type<T>, T>::type const&
-get(value const& v)
-{
-    return v.template get<T>();
-}
 
 #if __cplusplus <= 201103L
 template<typename Visitor>

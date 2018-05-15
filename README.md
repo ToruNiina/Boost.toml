@@ -188,7 +188,7 @@ currently, `boost::tuple` is not supported for this purpose.
 Array of Tables can be obtained as the same way described before.
 
 ```cpp
-// it is just an array of table. clear, no?
+// it is just an array of table.
 std::vector<toml::table> tables = toml::get<std::vector<toml::table> >(v);
 ```
 
@@ -562,9 +562,6 @@ struct value
 };
 
 void swap(value& lhs, value& rhs);
-
-template<typename T> T&       get(value&);
-template<typename T> T const& get(value const&);
 
 template<typename Visitor>
 /* result type of Visitor */ apply_visitor(Visitor, value&);
