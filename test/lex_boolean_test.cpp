@@ -1,51 +1,108 @@
 #define BOOST_TEST_MODULE "parse_boolean_test"
-#include <toml/parser.hpp>
 #include <boost/test/included/unit_test.hpp>
+#include <toml/lexer.hpp>
 #include <iostream>
 #include <iomanip>
 
-inline void check_equal(const std::string token, const toml::boolean answer)
+using namespace toml;
+using namespace detail;
+
+BOOST_AUTO_TEST_CASE(test_lex_boolean_correct)
 {
-    const toml::detail::result<toml::boolean, std::string::const_iterator>
-        result = toml::detail::parse_boolean(token.begin(), token.end());
-    BOOST_CHECK(result);
-    BOOST_CHECK(result.iterator() == token.end());
-    if(!result)
     {
-        std::cerr << result << std::endl;
+        const std::string token("true");
+        std::string::const_iterator iter = token.begin();
+        const boost::optional<std::string> result =
+            lex_boolean::invoke(iter, token.end());
+
+        BOOST_CHECK(result);
+        if(result)
+        {
+            BOOST_CHECK_EQUAL(*result, "true");
+        }
+        BOOST_CHECK(iter == token.end());
     }
-    BOOST_CHECK_EQUAL(result.unwrap(), answer);
-}
-inline void check_fail(const std::string token)
-{
-    const toml::detail::result<toml::boolean, std::string::const_iterator>
-        result = toml::detail::parse_boolean(token.begin(), token.end());
-    BOOST_CHECK(!result);
-    if(result)
     {
-        std::cerr << result << std::endl;
+        const std::string token("false");
+        std::string::const_iterator iter = token.begin();
+        const boost::optional<std::string> result =
+            lex_boolean::invoke(iter, token.end());
+
+        BOOST_CHECK(result);
+        if(result)
+        {
+            BOOST_CHECK_EQUAL(*result, "false");
+        }
+        BOOST_CHECK(iter == token.end());
     }
-    std::cout << "successfully failed. error message is -> "
-              << result.unwrap_err() << std::endl;
-}
-inline void check_partially_read(const std::string token)
-{
-    const toml::detail::result<toml::boolean, std::string::const_iterator>
-        result = toml::detail::parse_boolean(token.begin(), token.end());
-    BOOST_CHECK(result.iterator() != token.begin());
-    BOOST_CHECK(result.iterator() != token.end());
 }
 
-BOOST_AUTO_TEST_CASE(test_boolean_correct)
+BOOST_AUTO_TEST_CASE(test_lex_boolean_continues)
 {
-    check_equal("true",  true);
-    check_equal("false", false);
+    {
+        const std::string token("true foo bar");
+        std::string::const_iterator iter = token.begin();
+        const boost::optional<std::string> result =
+            lex_boolean::invoke(iter, token.end());
+
+        BOOST_CHECK(result);
+        if(result)
+        {
+            BOOST_CHECK_EQUAL(*result, "true");
+        }
+        BOOST_CHECK(iter == token.begin() + 4);
+    }
+    {
+        const std::string token("false foo bar");
+        std::string::const_iterator iter = token.begin();
+        const boost::optional<std::string> result =
+            lex_boolean::invoke(iter, token.end());
+
+        BOOST_CHECK(result);
+        if(result)
+        {
+            BOOST_CHECK_EQUAL(*result, "false");
+        }
+        BOOST_CHECK(iter == token.begin() + 5);
+    }
 }
 
 BOOST_AUTO_TEST_CASE(test_boolean_invalid)
 {
-    check_fail("True");
-    check_fail("False");
-    check_fail("tlue");
-    check_fail("farse");
+    {
+        const std::string token("True");
+        std::string::const_iterator iter = token.begin();
+        const boost::optional<std::string> result =
+            lex_boolean::invoke(iter, token.end());
+
+        BOOST_CHECK(!result);
+        BOOST_CHECK(iter != token.end());
+    }
+    {
+        const std::string token("False");
+        std::string::const_iterator iter = token.begin();
+        const boost::optional<std::string> result =
+            lex_boolean::invoke(iter, token.end());
+
+        BOOST_CHECK(!result);
+        BOOST_CHECK(iter != token.end());
+    }
+    {
+        const std::string token("trua");
+        std::string::const_iterator iter = token.begin();
+        const boost::optional<std::string> result =
+            lex_boolean::invoke(iter, token.end());
+
+        BOOST_CHECK(!result);
+        BOOST_CHECK(iter != token.end());
+    }
+    {
+        const std::string token("falze");
+        std::string::const_iterator iter = token.begin();
+        const boost::optional<std::string> result =
+            lex_boolean::invoke(iter, token.end());
+
+        BOOST_CHECK(!result);
+        BOOST_CHECK(iter != token.end());
+    }
 }
