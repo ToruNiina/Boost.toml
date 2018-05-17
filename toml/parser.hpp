@@ -5,6 +5,7 @@
 #ifndef TOML_PARSER_HPP
 #define TOML_PARSER_HPP
 #include <toml/result.hpp>
+#include <toml/lexer.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/static_assert.hpp>
 #include <stdexcept>
@@ -151,47 +152,33 @@ parse_boolean(const InputIterator first, const InputIterator last)
             typename boost::iterator_value<InputIterator>::type, char>::value);
     typedef result<boolean, InputIterator> result_t;
 
-    if(first == last)
+    InputIterator iter = first;
+    const boost::optional<std::string> token = lex_boolean::invoke(iter, last);
+    if(token)
     {
-        return result_t(std::string(
-            "toml::detail::parse_boolean: input is empty."),
+        if(*token == "true")
+        {
+            return result_t(true, iter, success_t());
+        }
+        else if(*token == "false")
+        {
+            return result_t(false, iter, success_t());
+        }
+        else
+        {
+            throw std::invalid_argument("toml::detail::parse_boolean: "
+                    "lexer returns invalid token -> " + *token);
+        }
+    }
+    if(iter != first)
+    {
+        return result_t("toml::detail::parse_boolean: "
+            "partially match to boolean -> " + current_line(first, last),
             first, failure_t());
     }
-
-    InputIterator iter = first;
-    if(*iter == 't')
-    {
-        if(++iter != last && *iter == 'r' &&
-           ++iter != last && *iter == 'u' &&
-           ++iter != last && *iter == 'e')
-        {
-            return result_t(true, ++iter, success_t());
-        }
-        return result_t("toml::detail::parse_boolean: boolean keywords are "
-            "`true` or `false` -> " +
-            std::string(first, find_linebreak(first, last)), iter, failure_t());
-    }
-    else if(*iter == 'f')
-    {
-        if(++iter != last && *iter == 'a' &&
-           ++iter != last && *iter == 'l' &&
-           ++iter != last && *iter == 's' &&
-           ++iter != last && *iter == 'e')
-        {
-            return result_t(false, ++iter, success_t());
-        }
-        return result_t("toml::detail::parse_boolean: boolean keywords are "
-            "`true` or `false` -> " +
-            std::string(first, find_linebreak(first, last)), iter, failure_t());
-    }
-    else if(*iter == 'T' || *iter == 'F')
-    {
-        return result_t("toml::detail::parse_boolean: boolean keywords are "
-            "`true` or `false` -> " +
-            std::string(first, find_linebreak(first, last)), iter, failure_t());
-    }
-    return result_t(std::string(
-        "toml::detail::parse_boolean: failed. try next"), first, failure_t());
+    return result_t("toml::detail::parse_boolean: "
+        "next token may not be a boolean -> " + current_line(first, last),
+        first, failure_t());
 }
 
 template<typename InputIterator>
