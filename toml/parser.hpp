@@ -19,54 +19,11 @@ namespace detail
 
 // for error messages. not for parser.
 template<typename InputIterator>
-InputIterator
-find_linebreak(const InputIterator first, const InputIterator last)
-    BOOST_NOEXCEPT_OR_NOTHROW
+std::string current_line(const InputIterator first, const InputIterator last)
 {
     BOOST_STATIC_ASSERT(boost::is_same<
             typename boost::iterator_value<InputIterator>::type, char>::value);
-    const InputIterator CR = std::find(first, last, '\r');
-    if(CR != last)
-    {
-        InputIterator nxt = CR;
-        if(*++nxt == '\n')
-        {
-            return CR;
-        }
-        else
-        {
-            return find_linebreak(nxt, last);
-        }
-    }
-    return std::find(first, last, '\n');
-}
-
-template<typename Iterator, typename Predicate>
-bool all_of(const Iterator first, const Iterator last, Predicate pred)
-{
-    for(Iterator iter = first; iter != last; ++iter)
-    {
-        if(!pred(*iter)){return false;}
-    }
-    return true;
-}
-
-inline bool ishex(const char c)
-{
-    return ('0' <= c && c <= '9') ||
-           ('A' <= c && c <= 'F') || ('a' <= c && c <= 'f');
-}
-inline bool isdec(const char c)
-{
-    return ('0' <= c && c <= '9');
-}
-inline bool isoct(const char c)
-{
-    return ('0' <= c && c <= '7');
-}
-inline bool isbin(const char c)
-{
-    return ('0' == c || c == '1');
+    return std::string(first, std::find(first, last, '\n'));
 }
 
 inline std::string read_utf8_codepoint(const std::string& str)

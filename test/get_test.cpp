@@ -40,11 +40,11 @@ BOOST_AUTO_TEST_CASE(test_exact_toml_type)
         BOOST_CHECK(t == toml::get<toml::time>(v));
     }
     {
-        toml::datetime dt(toml::date(2018, toml::Apr, 22),
-                          toml::hours(1) + toml::minutes(30));
+        toml::local_datetime dt(toml::date(2018, toml::Apr, 22),
+                                toml::hours(1) + toml::minutes(30));
         toml::value v(toml::date(2018, toml::Apr, 22),
                       toml::hours(1) + toml::minutes(30));
-        BOOST_CHECK(dt == toml::get<toml::datetime>(v));
+        BOOST_CHECK(dt == toml::get<toml::local_datetime>(v));
     }
     {
         toml::array vec(1, toml::value(42));

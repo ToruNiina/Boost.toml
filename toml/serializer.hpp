@@ -40,7 +40,7 @@ struct serializer : boost::static_visitor<std::string>
     }
     std::string operator()(const date)     const {return "TODO: date";}
     std::string operator()(const time)     const {return "TODO: time";}
-    std::string operator()(const datetime) const {return "TODO: datetime";}
+    std::string operator()(const local_datetime) const {return "TODO: local_datetime";}
     std::string operator()(const offset_datetime) const {return "TODO: offset_datetime";}
     std::string operator()(const array)    const {return "TODO: array";}
     std::string operator()(const table)    const {return "TODO: table";}

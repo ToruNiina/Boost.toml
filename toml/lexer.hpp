@@ -150,9 +150,9 @@ typedef either<character<'"'>,
         either<character<'n'>,
         either<character<'r'>,
         either<character<'t'>,
-        either<sequence<character<'u'>, repeat<lex_hexdig, exactly<4> > >,
-        either<sequence<character<'U'>, repeat<lex_hexdig, exactly<8> > >
-        > > > > > > > > >
+        either<sequence<character<'u'>, repeat<lex_hex_dig, exactly<4> > >,
+               sequence<character<'U'>, repeat<lex_hex_dig, exactly<8> > >
+        > > > > > > > >
     > lex_escape_seq_char;
 typedef sequence<lex_escape, lex_escape_seq_char> lex_escaped;
 typedef either<lex_basic_unescaped, lex_escaped> lex_basic_char;
@@ -192,10 +192,14 @@ typedef sequence<lex_ml_literal_string_delim, sequence<lex_ml_literal_char,
         lex_ml_literal_string_delim>
     > lex_ml_literal_string;
 
+typedef either<either<lex_ml_basic_string,   lex_basic_string>,
+               either<lex_ml_literal_string, lex_literal_string>
+    > lex_string;
+
 // ===========================================================================
 
 typedef character<'#'> lex_comment_start_symbol;
-typedef either<character<'\t'>, exclude<in_range<0x00, 0x19>
+typedef either<character<'\t'>, exclude<in_range<0x00, 0x19> >
     > lex_non_eol;
 typedef sequence<lex_comment_start_symbol, repeat<lex_non_eol, unlimited>
     > lex_comment;
@@ -206,7 +210,7 @@ typedef repeat<either<lex_alpha, either<lex_digit,
         either<character<'-'>, character<'_'> > > >, at_least<1>
     > lex_unquoted_key;
 typedef either<lex_basic_string, lex_literal_string> lex_quoted_key;
-typedef either<lex_unquoted_key, lex_dotted_key> lex_simple_key;
+typedef either<lex_unquoted_key, lex_unquoted_key> lex_simple_key;
 typedef sequence<lex_simple_key,
         repeat<sequence<lex_dot_sep, lex_simple_key>, at_least<1> >
     > lex_dotted_key;
@@ -221,7 +225,7 @@ typedef sequence<lex_std_table_open,  lex_std_table_open>  lex_array_table_open;
 typedef sequence<lex_std_table_close, lex_std_table_close
     > lex_array_table_close;
 typedef sequence<lex_array_table_open, sequence<lex_key, lex_array_table_close>
-    > lex_std_table;
+    > lex_array_table;
 
 } // detail
 } // toml
