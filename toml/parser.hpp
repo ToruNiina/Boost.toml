@@ -9,6 +9,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/static_assert.hpp>
 #include <stdexcept>
+#include <iterator>
 #include <vector>
 #include <istream>
 #include <sstream>
@@ -90,7 +91,6 @@ parse_integer(InputIterator& iter, const InputIterator last)
                     else if(*i == '0' || *i == '_'){/* do nothing. */}
                     else
                     {
-                        std::cerr << "token -> " << *i << std::endl;
                         throw std::logic_error("toml::detail::parse_integer: "
                             "lexer returns invalid token -> " + *token);
                     }
@@ -178,257 +178,230 @@ parse_floating(InputIterator& iter, const InputIterator last)
             current_line(first, last));
 }
 
-// inline std::string read_utf8_codepoint(const std::string& str)
-// {
-//     boost::uint_least32_t codepoint;
-//     std::istringstream iss(str);
-//     iss >> std::hex >> codepoint;
-//
-//     std::string character;
-//     if(codepoint < 0x80)
-//     {
-//         character += static_cast<unsigned char>(codepoint);
-//     }
-//     else if(codepoint < 0x800)
-//     {
-//         character += static_cast<unsigned char>(0xC0| codepoint >> 6);
-//         character += static_cast<unsigned char>(0x80|(codepoint & 0x3F));
-//     }
-//     else if(codepoint < 0x10000)
-//     {
-//         character += static_cast<unsigned char>(0xE0| codepoint >> 12);
-//         character += static_cast<unsigned char>(0x80|(codepoint >> 6 & 0x3F));
-//         character += static_cast<unsigned char>(0x80|(codepoint      & 0x3F));
-//     }
-//     else
-//     {
-//         character += static_cast<unsigned char>(0xF0| codepoint >> 18);
-//         character += static_cast<unsigned char>(0x80|(codepoint >> 12 & 0x3F));
-//         character += static_cast<unsigned char>(0x80|(codepoint >> 6  & 0x3F));
-//         character += static_cast<unsigned char>(0x80|(codepoint       & 0x3F));
-//     }
-//     return character;
-// }
-//
-// template<typename InputIterator>
-// result<string, InputIterator>
-// parse_escape_sequence(const InputIterator first, const InputIterator last)
-// {
-//     // literal tag does not have any escape sequence. the result is basic_string
-//     typedef result<string, InputIterator> result_t;
-//
-//     InputIterator iter = first;
-//     if(iter == last || *iter != '\\')
-//     {
-//         throw std::invalid_argument(
-//                 "toml::detail::unescape: got empty or invalid string");
-//     }
-//     ++iter; // this is for backslash.
-//
-//     switch(*iter)
-//     {
-//         case '\\': return result_t(string("\\"), ++iter, success_t());
-//         case '"' : return result_t(string("\""), ++iter, success_t());
-//         case 'b' : return result_t(string("\b"), ++iter, success_t());
-//         case 't' : return result_t(string("\t"), ++iter, success_t());
-//         case 'n' : return result_t(string("\n"), ++iter, success_t());
-//         case 'f' : return result_t(string("\f"), ++iter, success_t());
-//         case 'r' : return result_t(string("\r"), ++iter, success_t());
-//         case 'u' :
-//         {
-//             if(std::distance(iter, last) < 5)
-//             {
-//                 return result_t("toml::detail::parse_escape_sequence: "
-//                     "\\uXXXX must have 4 numbers -> " +
-//                     std::string(first, find_linebreak(first, last)),
-//                     iter, failure_t());
-//             }
-//
-//             InputIterator cp_begin = iter; std::advance(cp_begin, 1);
-//             InputIterator cp_end   = iter; std::advance(cp_end,   5);
-//             if(!::toml::detail::all_of(cp_begin, cp_end, ishex))
-//             {
-//                 return result_t("toml::detail::parse_escape_sequence: "
-//                     "\\uXXXX must be represented by hex -> " +
-//                     std::string(first, find_linebreak(first, last)),
-//                     iter, failure_t());
-//             }
-//
-//             const std::string unesc =
-//                 read_utf8_codepoint(std::string(cp_begin, cp_end));
-//             return result_t(string(unesc), cp_end, success_t());
-//         }
-//         case 'U':
-//         {
-//             if(std::distance(iter, last) < 9)
-//             {
-//                 return result_t("toml::detail::parse_escape_sequence: "
-//                     "\\UXXXXXXXX must have 8 numbers -> " +
-//                     std::string(first, find_linebreak(first, last)),
-//                     iter, failure_t());
-//             }
-//
-//             InputIterator cp_begin = iter; std::advance(cp_begin, 1);
-//             InputIterator cp_end   = iter; std::advance(cp_end,   9);
-//             if(!::toml::detail::all_of(cp_begin, cp_end, ishex))
-//             {
-//                 return result_t("toml::detail::parse_escape_sequence: "
-//                     "\\UXXXXXXXX must be represented by hex -> " +
-//                     std::string(first, find_linebreak(first, last)),
-//                     iter, failure_t());
-//             }
-//
-//             const std::string unesc =
-//                 read_utf8_codepoint(std::string(cp_begin, cp_end));
-//             return result_t(string(unesc), cp_end, success_t());
-//         }
-//         default:
-//         {
-//             return result_t("toml::detail::parse_escape_sequence: "
-//                 "unknown escape sequence appeared. -> " +
-//                 std::string(first, find_linebreak(first, last)),
-//                 iter, failure_t());
-//         }
-//     }
-// }
+inline std::string read_utf8_codepoint(const std::string& str)
+{
+    boost::uint_least32_t codepoint;
+    std::istringstream iss(str);
+    iss >> std::hex >> codepoint;
+
+    std::string character;
+    if(codepoint < 0x80)
+    {
+        character += static_cast<unsigned char>(codepoint);
+    }
+    else if(codepoint < 0x800)
+    {
+        character += static_cast<unsigned char>(0xC0| codepoint >> 6);
+        character += static_cast<unsigned char>(0x80|(codepoint & 0x3F));
+    }
+    else if(codepoint < 0x10000)
+    {
+        character += static_cast<unsigned char>(0xE0| codepoint >> 12);
+        character += static_cast<unsigned char>(0x80|(codepoint >> 6 & 0x3F));
+        character += static_cast<unsigned char>(0x80|(codepoint      & 0x3F));
+    }
+    else
+    {
+        character += static_cast<unsigned char>(0xF0| codepoint >> 18);
+        character += static_cast<unsigned char>(0x80|(codepoint >> 12 & 0x3F));
+        character += static_cast<unsigned char>(0x80|(codepoint >> 6  & 0x3F));
+        character += static_cast<unsigned char>(0x80|(codepoint       & 0x3F));
+    }
+    return character;
+}
+
+template<typename InputIterator>
+result<string, std::string>
+parse_escape_sequence(InputIterator& iter, const InputIterator last)
+{
+    const InputIterator first = iter;
+    if(*iter != '\\')
+    {
+        throw std::invalid_argument("toml::detail::parse_escape_sequence: "
+                "internal error appeared");
+    }
+    ++iter;
+
+    switch(*iter)
+    {
+        case '\\':{++iter; return ok(string("\\"));}
+        case '"' :{++iter; return ok(string("\""));}
+        case 'b' :{++iter; return ok(string("\b"));}
+        case 't' :{++iter; return ok(string("\t"));}
+        case 'n' :{++iter; return ok(string("\n"));}
+        case 'f' :{++iter; return ok(string("\f"));}
+        case 'r' :{++iter; return ok(string("\r"));}
+        case 'u' :
+        {
+            ++iter;
+            const boost::optional<std::string> token =
+                    repeat< lex_hex_dig, exactly<4> >::invoke(iter, last);
+            if(token)
+            {
+                return ok(string(read_utf8_codepoint(*token)));
+            }
+            return err("toml::detail::parse_escape_sequence: "
+                "\\uXXXX must have 4 hex numbers -> " +
+                current_line(first, last));
+        }
+        case 'U':
+        {
+            ++iter;
+            const boost::optional<std::string> token =
+                    repeat< lex_hex_dig, exactly<8> >::invoke(iter, last);
+            if(token)
+            {
+                return ok(string(read_utf8_codepoint(*token)));
+            }
+            return err("toml::detail::parse_escape_sequence: "
+                "\\UXXXXXXXX must have 8 hex numbers -> " +
+                current_line(first, last));
+        }
+    }
+    return err("toml::detail::parse_escape_sequence: "
+        "unknown escape sequence appeared. -> " + current_line(first, last));
+}
 
 
-// template<typename InputIterator>
-// result<string, InputIterator>
-// parse_multi_basic_string(const InputIterator first, const InputIterator last)
-// {
-//     return result<string, InputIterator>("TODO", first, failure_t());
-// }
-//
-// template<typename InputIterator>
-// result<string, InputIterator>
-// parse_multi_literal_string(const InputIterator first, const InputIterator last)
-// {
-//     return result<string, InputIterator>("TODO", first, failure_t());
-// }
-//
-// template<typename InputIterator>
-// result<string, InputIterator>
-// parse_basic_string(const InputIterator first, const InputIterator last)
-// {
-//     typedef result<string, InputIterator> result_t;
-//
-//     InputIterator iter(first);
-//     if(*iter != '"')
-//     {
-//         throw std::invalid_argument("toml::detail::parse_basic_string: "
-//                 "internal error appeared");
-//     }
-//     ++iter;
-//
-//     std::string token;
-//     for(; iter != last; ++iter)
-//     {
-//         if(*iter == '"')
-//         {
-//             return result_t(string(token, string::basic), ++iter, success_t());
-//         }
-//         else if(*iter == '\\')
-//         {
-//             const result_t unesc = parse_escape_sequence(iter, last);
-//             if(unesc.is_err()) {return unesc;}
-//             token += unesc.unwrap();
-//             InputIterator unesc_end = unesc.iterator();
-//             // XXX after this, the iterator will be incremented. so retrace by 1
-//             const typename std::iterator_traits<InputIterator>::difference_type
-//                 len_escape_sequence = std::distance(iter, unesc_end);
-//             std::advance(iter, len_escape_sequence - 1);
-//         }
-//         else if((0x00 <= *iter && *iter <= 0x1F) || *iter == 0x7F)
-//         {
-//             const int ch = *iter;
-//             std::ostringstream oss; oss << std::hex << ch;
-//             return result_t("toml::detail::parse_basic_string: "
-//                 "bare control character appeared -> 0x" + oss.str(),
-//                 iter, failure_t());
-//         }
-//         else
-//         {
-//             token += *iter;
-//         }
-//     }
-//     return result_t("toml::detail::parse_basic_string: "
-//         "basic string is not closed by `\"` -> " +
-//         std::string(first, find_linebreak(first, last)), iter, failure_t());
-// }
-//
-// template<typename InputIterator>
-// result<string, InputIterator>
-// parse_literal_string(const InputIterator first, const InputIterator last)
-// {
-//     typedef result<string, InputIterator> result_t;
-//
-//     InputIterator iter(first);
-//     if(*iter != '\'')
-//     {
-//         throw std::invalid_argument("toml::detail::parse_literal_string: "
-//                 "internal error appeared");
-//     }
-//     ++iter;
-//
-//     std::string token;
-//     for(; iter != last; ++iter)
-//     {
-//         if(*iter == '\'')
-//         {
-//             return result_t(string(token, string::literal), iter, success_t());
-//         }
-//         else if((*iter != 0x09 && 0x00 <= *iter && *iter <= 0x1F) ||
-//                 *iter == 0x7F)
-//         {
-//             const int ch = *iter;
-//             std::ostringstream oss; oss << std::hex << ch;
-//             return result_t("toml::detail::parse_literal_string: "
-//                 "bare control character appeared -> 0x" + oss.str(),
-//                 iter, failure_t());
-//         }
-//         else
-//         {
-//             token += *iter;
-//         }
-//     }
-//     return result_t("toml::detail::parse_literal_string: "
-//         "literal string is not closed by `'` -> " +
-//         std::string(first, find_linebreak(first, last)), iter, failure_t());
-// }
-//
-// template<typename InputIterator>
-// result<string, InputIterator>
-// parse_string(const InputIterator first, const InputIterator last)
-// {
-//     typedef result<string, InputIterator> result_t;
-//
-//     if(first == last)
-//     {
-//         return result_t(std::string(
-//             "toml::detail::parse_string: input is empty."), first, failure_t());
-//     }
-//
-//     InputIterator iter = first;
-//     if(*iter == '"')
-//     {
-//         if(++iter != last && *iter == '"' && ++iter != last && *iter == '"')
-//         {
-//             return parse_multi_basic_string(first, last);
-//         }
-//         return parse_basic_string(first, last);
-//     }
-//     else if(*iter == '\'')
-//     {
-//         if(++iter != last && *iter == '\'' && ++iter != last && *iter == '\'')
-//         {
-//             return parse_multi_literal_string(first, last);
-//         }
-//         return parse_literal_string(first, last);
-//     }
-//     return result_t(std::string(
-//         "toml::detail::parse_string: failed. try next"), first, failure_t());
-// }
+template<typename InputIterator>
+result<string, std::string>
+parse_multi_basic_string(const InputIterator first, const InputIterator last)
+{
+    return err(std::string("TODO"));
+}
+
+template<typename InputIterator>
+result<string, std::string>
+parse_multi_literal_string(const InputIterator first, const InputIterator last)
+{
+    return err(std::string("TODO"));
+}
+
+template<typename InputIterator>
+result<string, std::string>
+parse_basic_string(InputIterator& iter, const InputIterator last)
+{
+    const InputIterator first = iter;
+    if(*iter != '"')
+    {
+        throw std::invalid_argument("toml::detail::parse_basic_string: "
+            "internal error appeared -> basic_string does not starts with \"");
+    }
+    ++iter;
+
+    std::string token;
+    for(; iter != last; ++iter)
+    {
+        if(*iter == '"')
+        {
+            ++iter;
+            return ok(string(token, string::basic));
+        }
+        else if(*iter == '\\')
+        {
+            // since here is inside a loop, after this, iter will be incremented
+            // to deal with this, retrace iter by 1. but it is not guaranteed
+            // that InputIterator is a bidirectional iterator, so store the
+            // iterator value before reading escape seq.
+            const InputIterator bfr(iter);
+
+            const result<string, std::string> unesc =
+                parse_escape_sequence(iter, last);
+            if(unesc.is_err()) {return unesc;}
+            token += unesc.unwrap();
+
+            // retrace by 1 without using operator--.
+            const typename std::iterator_traits<InputIterator>::difference_type
+                dist = std::distance(bfr, iter) - 1;
+            iter = bfr;
+            std::advance(iter, dist);
+        }
+        else if((0x00 <= *iter && *iter <= 0x1F) || *iter == 0x7F)
+        {
+            const int ch = *iter;
+            std::ostringstream oss; oss << std::hex << ch;
+            return err("toml::detail::parse_basic_string: "
+                "bare control character appeared -> 0x" + oss.str());
+        }
+        else
+        {
+            token += *iter;
+        }
+    }
+    return err("toml::detail::parse_basic_string: "
+        "basic string is not closed by `\"` -> " + current_line(first, last));
+}
+
+template<typename InputIterator>
+result<string, std::string>
+parse_literal_string(InputIterator& iter, const InputIterator last)
+{
+    const InputIterator first = iter;
+    if(*iter != '\'')
+    {
+        throw std::invalid_argument("toml::detail::parse_literal_string: "
+            "internal error appeared -> literal string does not starts with '");
+    }
+    ++iter;
+
+    std::string token;
+    for(; iter != last; ++iter)
+    {
+        const char c = *iter;
+        if(c == '\'')
+        {
+            ++iter;
+            return ok(string(token, string::literal));
+        }
+        else if((c != 0x09 && 0x00 <= c && c <= 0x1F) || c == 0x7F)
+        {
+            const int ch = c;
+            std::ostringstream oss; oss << std::hex << ch;
+            return err("toml::detail::parse_literal_string: "
+                "bare control character appeared -> 0x" + oss.str());
+        }
+        else
+        {
+            token += *iter;
+        }
+    }
+    return err("toml::detail::parse_literal_string: "
+        "literal string is not closed by `'` -> " + current_line(first, last));
+}
+
+template<typename InputIterator>
+result<string, std::string>
+parse_string(InputIterator& iter, const InputIterator last)
+{
+    const InputIterator first = iter;
+    if(iter == last)
+    {
+        return err(std::string("toml::detail::parse_string: input is empty"));
+    }
+
+    if(*iter == '"')
+    {
+        if(++iter != last && *iter == '"' && ++iter != last && *iter == '"')
+        {
+            iter = first;
+            return parse_multi_basic_string(iter, last);
+        }
+        iter = first;
+        return parse_basic_string(iter, last);
+    }
+    else if(*iter == '\'')
+    {
+        if(++iter != last && *iter == '\'' && ++iter != last && *iter == '\'')
+        {
+            iter = first;
+            return parse_multi_literal_string(iter, last);
+        }
+        iter = first;
+        return parse_literal_string(iter, last);
+    }
+    return err("toml::detail::parse_string: next token is not a string -> " +
+            current_line(first, last));
+}
 
 // template<typename InputIterator>
 // result<toml::value, std::string>
