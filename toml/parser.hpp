@@ -108,6 +108,8 @@ parse_integer(InputIterator& iter, const InputIterator last)
                 const std::string::iterator token_last =
                     std::remove(token->begin(), token->end(), '_');
                 token->erase(token_last, token->end());
+                token->erase(token->begin()); // 0
+                token->erase(token->begin()); // o
 
                 std::istringstream iss(*token);
                 integer retval;
@@ -124,6 +126,8 @@ parse_integer(InputIterator& iter, const InputIterator last)
                 const std::string::iterator token_last =
                     std::remove(token->begin(), token->end(), '_');
                 token->erase(token_last, token->end());
+                token->erase(token->begin()); // 0
+                token->erase(token->begin()); // x
 
                 std::istringstream iss(*token);
                 integer retval;
