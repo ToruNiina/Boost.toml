@@ -51,8 +51,8 @@ struct exclude
     {
         if(first == last){return boost::none;}
         InputIterator iter = first;
-        const boost::optional<std::string> result = T::invoke(iter, last);
-        if(result){return boost::none;}
+        const boost::optional<std::string> rslt = T::invoke(iter, last);
+        if(rslt){return boost::none;}
         std::string token; token += *(first++);
         return token;
     }
