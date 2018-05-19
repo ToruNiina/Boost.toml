@@ -65,8 +65,8 @@ parse_boolean(InputIterator& iter, const InputIterator last)
         return err("toml::detail::parse_boolean: partially match to boolean -> "
                 + current_line(first, last));
     }
-    return err("toml::detail::parse_boolean: next token is not a boolean -> " +
-            current_line(first, last));
+    return err("toml::detail::parse_boolean: "
+            "the next token is not a boolean -> " + current_line(first, last));
 }
 
 template<typename InputIterator>
@@ -153,8 +153,8 @@ parse_integer(InputIterator& iter, const InputIterator last)
     }
 
     iter = first;
-    return err("toml::detail::parse_integer: next token is not a integer -> " +
-            current_line(first, last));
+    return err("toml::detail::parse_integer: "
+            "the next token is not an integer -> " + current_line(first, last));
 }
 
 template<typename InputIterator>
@@ -175,8 +175,8 @@ parse_floating(InputIterator& iter, const InputIterator last)
 
     }
     iter = first;
-    return err("toml::detail::parse_integer: next token is not a integer -> " +
-            current_line(first, last));
+    return err("toml::detail::parse_integer: "
+            "the next token is not a integer -> " + current_line(first, last));
 }
 
 inline std::string read_utf8_codepoint(const std::string& str)
@@ -358,7 +358,7 @@ parse_ml_literal_string(InputIterator& iter, const InputIterator last)
             if(const boost::optional<std::string> close =
                 lex_ml_literal_string_delim::invoke(iter, last))
             {
-                return ok(string(token, string::basic));
+                return ok(string(token, string::literal));
             }
             iter = bfr;
         }
@@ -628,11 +628,13 @@ parse_local_datetime(InputIterator& iter, const InputIterator last)
     const result<date, std::string> dr = parse_local_date(iter, last);
     if(!dr)
     {
+        iter = first;
         return err("toml::detail::parse_local_datetime: " + dr.unwrap_err());
     }
 
     if(iter == last || (*iter != 'T' && *iter != 't' && *iter != ' '))
     {
+        iter = first;
         return err("toml::detail::parse_local_datetime: "
             "invalid datetime delimiter -> " + current_line(first, last));
     }
@@ -641,6 +643,7 @@ parse_local_datetime(InputIterator& iter, const InputIterator last)
     const result<time, std::string> tr = parse_local_time(iter, last);
     if(!tr)
     {
+        iter = first;
         return err("toml::detail::parse_local_datetime: " + tr.unwrap_err());
     }
     return ok(local_datetime(dr.unwrap(), tr.unwrap()));
@@ -660,6 +663,7 @@ parse_offset_datetime(InputIterator& iter, const InputIterator last)
         parse_local_datetime(iter, last);
     if(!ldt)
     {
+        iter = first;
         return err("toml::detail::parse_offset_datetime: " + ldt.unwrap_err());
     }
 
@@ -671,6 +675,7 @@ parse_offset_datetime(InputIterator& iter, const InputIterator last)
     }
     else if(*iter != '+' && *iter != '-')
     {
+        iter = first;
         return err("toml::detail::parse_offset_datetime: invalid time numoffset"
                 + current_line(first, last));
     }
@@ -682,7 +687,6 @@ parse_offset_datetime(InputIterator& iter, const InputIterator last)
         lex_time_hour::invoke(iter, last);
     if(!offset_h || *iter != ':')
     {
-        iter = first;
         return err("toml::detail::parse_offset_datetime: "
             "did not match offset-hour -> " + current_line(iter, last));
     }
@@ -692,7 +696,6 @@ parse_offset_datetime(InputIterator& iter, const InputIterator last)
         lex_time_minute::invoke(iter, last);
     if(!offset_m)
     {
-        iter = first;
         return err("toml::detail::parse_offset_datetime: "
             "did not match offset minute" + current_line(iter, last));
     }
@@ -721,44 +724,200 @@ parse_offset_datetime(InputIterator& iter, const InputIterator last)
                 tzn, offset, dst_offset, rules))));
 }
 
+// forward-decl
+template<typename InputIterator>
+result<value, std::string>
+parse_value(InputIterator& iter, const InputIterator last);
 
-// template<typename InputIterator>
-// result<toml::value, std::string>
-// parse_value(InputIterator& iter, const InputIterator last)
-// {
-//     BOOST_STATIC_ASSERT(boost::is_same<
-//             typename boost::iterator_value<InputIterator>::type, char>::value);
-//
-//     const InputIterator first = iter;
-//     if(first == last)
-//     {
-//         return err("toml::detail::parse_value: input is empty");
-//     }
-//
-//     {
-//         const result<boolean, std::string> r = parse_boolean(first, last);
-//         if(r.is_ok()) {return r;} else if(r.iterator() != first) {return r;}
-//     }
-//     {
-//         // floating parser should be applied earlier than integer parser.
-//         const result<floating, InputIterator> r = parse_floating(first, last);
-//         if(r.is_ok()) {return result_t(r.unwrap(), r.iterator(), success_t());}
-//         else if(r.iterator() != first) {return r;}
-//     }
-//     {
-//         const result<integer, InputIterator> r = parse_integer(first, last);
-//         if(r.is_ok()) {return result_t(r.unwrap(), r.iterator(), success_t());}
-//         else if(r.iterator() != first) {return r;}
-//     }
-//     {
-//         const result<string, InputIterator> r = parse_string(first, last);
-//         if(r.is_ok()) {return result_t(r.unwrap(), r.iterator(), success_t());}
-//         else if(r.iterator() != first) {return r;}
-//     }
-//     return result_t("toml::detail::parse_value: unknown token appeared -> " +
-//         std::string(first, find_linebreak(first, last)), first, failure_t());
-// }
-//
+template<typename InputIterator>
+result<array, std::string>
+parse_array(InputIterator& iter, const InputIterator last)
+{
+    const InputIterator first = iter;
+    if(iter == last)
+    {
+        return err(std::string("toml::detail::parse_array: input is empty"));
+    }
+
+    if(*iter != '[')
+    {
+        return err("toml::detail::parse_array: "
+            "the next token is not an array -> " + current_line(first, last));
+    }
+    ++iter;
+
+    array retval;
+    while(iter != last)
+    {
+        typedef repeat<either<lex_wschar, either<lex_newline, lex_comment> >,
+            unlimited> lex_ws_comment_newline;
+        lex_ws_comment_newline::invoke(iter, last);
+
+        if(iter != last && *iter == ']')
+        {
+            return ok(retval);
+        }
+
+        const InputIterator bfr(iter);
+        result<value, std::string> val_r = parse_value(iter, last);
+        if(val_r)
+        {
+            retval.push_back(val_r.unwrap());
+        }
+        else
+        {
+            return err("toml::detail::parse_array: " + val_r.unwrap_err());
+        }
+        typedef sequence<maybe<lex_ws>, character<','> > lex_array_separator;
+        const boost::optional<std::string> sp =
+            lex_array_separator::invoke(iter, last);
+        if(!sp)
+        {
+            lex_ws_comment_newline::invoke(iter, last);
+            if(iter != last && *iter == ']')
+            {
+                return ok(retval);
+            }
+            else
+            {
+                return err("toml::detail::parse_array: "
+                    "missing array separator `,` -> " + current_line(bfr,last));
+            }
+        }
+    }
+
+    return err("toml::detail::parse_array: array did not closed by `]` -> "
+            + current_line(first, last));
+}
+
+
+template<typename InputIterator>
+result<toml::value, std::string>
+parse_value(InputIterator& iter, const InputIterator last)
+{
+    BOOST_STATIC_ASSERT(boost::is_same<
+            typename boost::iterator_value<InputIterator>::type, char>::value);
+    const InputIterator first = iter;
+    if(first == last)
+    {
+        return err(std::string("toml::detail::parse_value: input is empty"));
+    }
+
+    {
+        const result<string, std::string> r = parse_string(iter, last);
+        if(r.is_ok())
+        {
+            return ok(r.unwrap());
+        }
+        else if(iter != first)
+        {
+            return err("toml::detail::parse_value: partial match: " +
+                    r.unwrap_err());
+        }
+    }
+    {
+        const result<array, std::string> r = parse_array(iter, last);
+        if(r.is_ok())
+        {
+            return ok(r.unwrap());
+        }
+        else if(iter != first)
+        {
+            return err("toml::detail::parse_value: partial match: " +
+                    r.unwrap_err());
+        }
+    }
+    {
+        const result<boolean, std::string> r = parse_boolean(iter, last);
+        if(r.is_ok())
+        {
+            return ok(r.unwrap());
+        }
+        else if(iter != first)
+        {
+            return err("toml::detail::parse_value: partial match: " +
+                    r.unwrap_err());
+        }
+    }
+    {
+        const result<offset_datetime, std::string> r =
+            parse_offset_datetime(iter, last);
+        if(r.is_ok())
+        {
+            return ok(r.unwrap());
+        }
+        else if(iter != first)
+        {
+            return err("toml::detail::parse_value: partial match: " +
+                    r.unwrap_err());
+        }
+    }
+    {
+        const result<local_datetime, std::string> r =
+            parse_local_datetime(iter, last);
+        if(r.is_ok())
+        {
+            return ok(r.unwrap());
+        }
+        else if(iter != first)
+        {
+            return err("toml::detail::parse_value: partial match: " +
+                    r.unwrap_err());
+        }
+    }
+    {
+        const result<time, std::string> r = parse_local_time(iter, last);
+        if(r.is_ok())
+        {
+            return ok(r.unwrap());
+        }
+        else if(iter != first)
+        {
+            return err("toml::detail::parse_value: partial match: " +
+                    r.unwrap_err());
+        }
+    }
+    {
+        const result<date, std::string> r = parse_local_date(iter, last);
+        if(r.is_ok())
+        {
+            return ok(r.unwrap());
+        }
+        else if(iter != first)
+        {
+            return err("toml::detail::parse_value: partial match: " +
+                    r.unwrap_err());
+        }
+    }
+    {
+        const result<floating, std::string> r = parse_floating(iter, last);
+        if(r.is_ok())
+        {
+            return ok(r.unwrap());
+        }
+        else if(iter != first)
+        {
+            return err("toml::detail::parse_value: partial match: " +
+                    r.unwrap_err());
+        }
+    }
+    {
+        const result<integer, std::string> r = parse_integer(iter, last);
+        if(r.is_ok())
+        {
+            return ok(r.unwrap());
+        }
+        else if(iter != first)
+        {
+            return err("toml::detail::parse_value: partial match: " +
+                    r.unwrap_err());
+        }
+    }
+
+    return err("toml::detail::parse_value: unknown token appeared -> " +
+            current_line(first, last));
+}
+
 } // detail
 
 // inline toml::table parse(const std::string& fname)
