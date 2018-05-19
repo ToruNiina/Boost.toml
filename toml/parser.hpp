@@ -8,7 +8,7 @@
 #include <toml/lexer.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/static_assert.hpp>
-#include <stdexcept>
+#include <boost/optional/optional_io.hpp>
 #include <iterator>
 #include <vector>
 #include <istream>
@@ -262,19 +262,123 @@ parse_escape_sequence(InputIterator& iter, const InputIterator last)
         "unknown escape sequence appeared. -> " + current_line(first, last));
 }
 
-
 template<typename InputIterator>
 result<string, std::string>
-parse_multi_basic_string(const InputIterator first, const InputIterator last)
+parse_ml_basic_string(InputIterator& iter, const InputIterator last)
 {
-    return err(std::string("TODO"));
+    const InputIterator first = iter;
+    {
+        boost::optional<std::string> open =
+                lex_ml_basic_string_delim::invoke(iter, last);
+        if(!open)
+        {
+            throw std::invalid_argument("toml::detail::parse_ml_basic_string: "
+                "internal error appeared -> \"\"\" not found");
+        }
+    }
+    {
+        const InputIterator bfr(iter);
+        const boost::optional<std::string> nl = lex_newline::invoke(iter, last);
+        if(!nl){iter = bfr;}
+    }
+
+    std::string token;
+    while(iter != last)
+    {
+        {
+            const InputIterator bfr(iter);
+            if(const boost::optional<std::string> close =
+                lex_ml_basic_string_delim::invoke(iter, last))
+            {
+                return ok(string(token, string::basic));
+            }
+            iter = bfr;
+        }
+        {
+            typedef sequence<character<'\\'>,
+                repeat<either<lex_ws, lex_newline>, at_least<1> > > trim_ws_nl;
+            const InputIterator bfr(iter);
+            const boost::optional<std::string> trimmed =
+                trim_ws_nl::invoke(iter, last);
+            if(!trimmed) {iter = bfr;}
+        }
+
+        typedef either<lex_ml_basic_unescaped, lex_newline> lex_ml_basic_letter;
+        if(*iter == '\\')
+        {
+            const result<string, std::string> unesc =
+                parse_escape_sequence(iter, last);
+            if(unesc.is_err()) {return unesc;}
+            token += unesc.unwrap();
+        }
+        else if(const boost::optional<std::string> ch =
+                lex_ml_basic_letter::invoke(iter, last))
+        {
+            token += *ch;
+        }
+        else
+        {
+            const int code = *iter;
+            std::ostringstream oss; oss << std::hex << code;
+            return err("toml::detail::parse_basic_string: "
+                "bare control character appeared -> 0x" + oss.str());
+        }
+    }
+    return err("toml::detail::parse_ml_basic_string: "
+        "multi line basic string is not closed by `\"\"\"` -> " +
+        current_line(first, last));
 }
 
 template<typename InputIterator>
 result<string, std::string>
-parse_multi_literal_string(const InputIterator first, const InputIterator last)
+parse_ml_literal_string(InputIterator& iter, const InputIterator last)
 {
-    return err(std::string("TODO"));
+    const InputIterator first = iter;
+    {
+        boost::optional<std::string> open =
+                lex_ml_literal_string_delim::invoke(iter, last);
+        if(!open)
+        {
+            throw std::invalid_argument("toml::detail::parse_ml_literal_string:"
+                " internal error appeared -> ''' not found");
+        }
+    }
+    {
+        const InputIterator bfr(iter);
+        const boost::optional<std::string> nl = lex_newline::invoke(iter, last);
+        if(!nl){iter = bfr;}
+    }
+
+    std::string token;
+    while(iter != last)
+    {
+        {
+            const InputIterator bfr(iter);
+            if(const boost::optional<std::string> close =
+                lex_ml_literal_string_delim::invoke(iter, last))
+            {
+                return ok(string(token, string::basic));
+            }
+            iter = bfr;
+        }
+
+        typedef either<lex_ml_literal_char, lex_newline> lex_ml_literal_letter;
+        if(const boost::optional<std::string> ch =
+                lex_ml_literal_letter::invoke(iter, last))
+        {
+            token += *ch;
+        }
+        else
+        {
+            const int code = *iter;
+            std::ostringstream oss; oss << std::hex << code;
+            return err("toml::detail::parse_basic_string: "
+                "bare control character appeared -> 0x" + oss.str());
+        }
+    }
+    return err("toml::detail::parse_ml_literal_string: "
+        "multi line basic string is not closed by `'''` -> " +
+        current_line(first, last));
 }
 
 template<typename InputIterator>
@@ -290,7 +394,7 @@ parse_basic_string(InputIterator& iter, const InputIterator last)
     ++iter;
 
     std::string token;
-    for(; iter != last; ++iter)
+    while(iter != last)
     {
         if(*iter == '"')
         {
@@ -299,33 +403,22 @@ parse_basic_string(InputIterator& iter, const InputIterator last)
         }
         else if(*iter == '\\')
         {
-            // since here is inside a loop, after this, iter will be incremented
-            // to deal with this, retrace iter by 1. but it is not guaranteed
-            // that InputIterator is a bidirectional iterator, so store the
-            // iterator value before reading escape seq.
-            const InputIterator bfr(iter);
-
             const result<string, std::string> unesc =
                 parse_escape_sequence(iter, last);
             if(unesc.is_err()) {return unesc;}
             token += unesc.unwrap();
-
-            // retrace by 1 without using operator--.
-            const typename std::iterator_traits<InputIterator>::difference_type
-                dist = std::distance(bfr, iter) - 1;
-            iter = bfr;
-            std::advance(iter, dist);
         }
-        else if((0x00 <= *iter && *iter <= 0x1F) || *iter == 0x7F)
+        else if(const boost::optional<std::string> ch =
+                lex_basic_unescaped::invoke(iter, last))
         {
-            const int ch = *iter;
-            std::ostringstream oss; oss << std::hex << ch;
-            return err("toml::detail::parse_basic_string: "
-                "bare control character appeared -> 0x" + oss.str());
+            token += *ch;
         }
         else
         {
-            token += *iter;
+            const int code = *iter;
+            std::ostringstream oss; oss << std::hex << code;
+            return err("toml::detail::parse_basic_string: "
+                "bare control character appeared -> 0x" + oss.str());
         }
     }
     return err("toml::detail::parse_basic_string: "
@@ -345,24 +438,24 @@ parse_literal_string(InputIterator& iter, const InputIterator last)
     ++iter;
 
     std::string token;
-    for(; iter != last; ++iter)
+    while(iter != last)
     {
-        const char c = *iter;
-        if(c == '\'')
+        if(*iter == '\'')
         {
             ++iter;
             return ok(string(token, string::literal));
         }
-        else if((c != 0x09 && 0x00 <= c && c <= 0x1F) || c == 0x7F)
+        else if(const boost::optional<std::string> ch =
+                lex_literal_char::invoke(iter, last))
         {
-            const int ch = c;
-            std::ostringstream oss; oss << std::hex << ch;
-            return err("toml::detail::parse_literal_string: "
-                "bare control character appeared -> 0x" + oss.str());
+            token += *ch;
         }
         else
         {
-            token += *iter;
+            const int code = *iter;
+            std::ostringstream oss; oss << std::hex << code;
+            return err("toml::detail::parse_literal_string: "
+                "bare control character appeared -> 0x" + oss.str());
         }
     }
     return err("toml::detail::parse_literal_string: "
@@ -384,7 +477,7 @@ parse_string(InputIterator& iter, const InputIterator last)
         if(++iter != last && *iter == '"' && ++iter != last && *iter == '"')
         {
             iter = first;
-            return parse_multi_basic_string(iter, last);
+            return parse_ml_basic_string(iter, last);
         }
         iter = first;
         return parse_basic_string(iter, last);
@@ -394,7 +487,7 @@ parse_string(InputIterator& iter, const InputIterator last)
         if(++iter != last && *iter == '\'' && ++iter != last && *iter == '\'')
         {
             iter = first;
-            return parse_multi_literal_string(iter, last);
+            return parse_ml_literal_string(iter, last);
         }
         iter = first;
         return parse_literal_string(iter, last);
