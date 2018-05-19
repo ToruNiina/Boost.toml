@@ -84,6 +84,7 @@ struct serializer : boost::static_visitor<std::string>
             serial += i->first;
             serial += " = ";
             serial += apply_visitor(*this, i->second);
+            serial += ", ";
         }
         serial += '}';
         return serial;
