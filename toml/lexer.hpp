@@ -18,7 +18,7 @@ namespace detail
 {
 
 typedef either<character<' '>, character<'\t'> > lex_wschar;
-typedef repeat<lex_wschar, unlimited> lex_ws;
+typedef repeat<lex_wschar, at_least<1> > lex_ws;
 
 typedef either<character<'\n'>, sequence<character<'\r'>, character<'\n'> >
     > lex_newline;
