@@ -4,7 +4,9 @@
 //          https://www.boost.org/LICENSE_1_0.txt)
 #ifndef TOML_RESULT_HPP
 #define TOML_RESULT_HPP
+#include <toml/predefine.hpp>
 #include <boost/config.hpp>
+#include <boost/type_traits.hpp>
 #include <boost/variant.hpp>
 #include <utility>
 #include <ostream>

@@ -6,6 +6,7 @@
 #define TOML_PARSER_HPP
 #include <toml/result.hpp>
 #include <toml/lexer.hpp>
+#include <toml/value.hpp>
 #include <boost/config.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/static_assert.hpp>
