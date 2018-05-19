@@ -1,4 +1,4 @@
-#define BOOST_TEST_MODULE "parse_floating_test"
+#define BOOST_TEST_MODULE "lex_floating_test"
 #include <toml/parser.hpp>
 #include <boost/test/included/unit_test.hpp>
 #include <iostream>

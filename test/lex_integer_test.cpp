@@ -1,4 +1,4 @@
-#define BOOST_TEST_MODULE "parse_integer_test"
+#define BOOST_TEST_MODULE "lex_integer_test"
 #include <toml/lexer.hpp>
 #include <boost/test/included/unit_test.hpp>
 #include <iostream>

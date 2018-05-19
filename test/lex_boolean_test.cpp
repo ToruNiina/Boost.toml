@@ -1,4 +1,4 @@
-#define BOOST_TEST_MODULE "parse_boolean_test"
+#define BOOST_TEST_MODULE "lex_boolean_test"
 #include <boost/test/included/unit_test.hpp>
 #include <toml/lexer.hpp>
 #include <iostream>
