@@ -17,6 +17,7 @@ BOOST_CONSTEXPR inline std::size_t forceinline()
     return std::numeric_limits<std::size_t>::max();
 }
 
+// TODO fix everything
 struct serializer : boost::static_visitor<std::string>
 {
     serializer(const std::size_t ln): line_(ln){}
@@ -38,12 +39,55 @@ struct serializer : boost::static_visitor<std::string>
         const std::string quote(1, (s.kind == string::literal) ? '\'' : '"');
         return quote + s.str + quote;
     }
-    std::string operator()(const date)     const {return "TODO: date";}
-    std::string operator()(const time)     const {return "TODO: time";}
-    std::string operator()(const local_datetime) const {return "TODO: local_datetime";}
-    std::string operator()(const offset_datetime) const {return "TODO: offset_datetime";}
-    std::string operator()(const array)    const {return "TODO: array";}
-    std::string operator()(const table)    const {return "TODO: table";}
+    std::string operator()(const date& v) const
+    {
+        std::ostringstream oss;
+        oss << v;
+        return oss.str();
+    }
+    std::string operator()(const time& v) const
+    {
+        std::ostringstream oss;
+        oss << v;
+        return oss.str();
+    }
+    std::string operator()(const local_datetime& v) const
+    {
+        std::ostringstream oss;
+        oss << v;
+        return oss.str();
+    }
+    std::string operator()(const offset_datetime& v) const
+    {
+        std::ostringstream oss;
+        oss << v;
+        return oss.str();
+    }
+    std::string operator()(const array& v) const
+    {
+        std::string serial;
+        serial += '[';
+        for(typename array::const_iterator i(v.begin()), e(v.end()); i!=e; ++i)
+        {
+            serial += apply_visitor(*this, *i);
+            serial += ", ";
+        }
+        serial += ']';
+        return serial;
+    }
+    std::string operator()(const table& v) const
+    {
+        std::string serial;
+        serial += '{';
+        for(typename table::const_iterator i(v.begin()), e(v.end()); i!=e; ++i)
+        {
+            serial += i->first;
+            serial += " = ";
+            serial += apply_visitor(*this, i->second);
+        }
+        serial += '}';
+        return serial;
+    }
 
   private:
     std::size_t line_;    // TODO use it to serialize
