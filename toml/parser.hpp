@@ -6,6 +6,7 @@
 #define TOML_PARSER_HPP
 #include <toml/result.hpp>
 #include <toml/lexer.hpp>
+#include <boost/config.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/static_assert.hpp>
 #include <boost/optional/optional_io.hpp>
@@ -592,8 +593,8 @@ parse_local_time(InputIterator& iter, const InputIterator last)
         }
         switch(subseconds->size() % 3)
         {
-            case 2: *subseconds += '0';
-            case 1: *subseconds += '0';
+            case 2: *subseconds += '0'; BOOST_FALLTHROUGH;
+            case 1: *subseconds += '0'; BOOST_FALLTHROUGH;
             case 0: break;
         }
         tm += milliseconds(boost::lexical_cast<int>(subseconds->substr(0, 3)));
