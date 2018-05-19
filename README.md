@@ -368,17 +368,19 @@ dt += boost::date_time::hours(12);
 ```
 
 And just for ease, Boost.toml imports some classes and enums.
-You can operate your `toml::datetime` value in the same way as
+You can operate your datetime value in the same way as
 Boost.Date\_Time without writing namespace `boost::date_time::` explicitly.
 
 ```cpp
 toml::value d(toml::date(2018, toml::Apr, 1));
 toml::value t(toml::hours(1) + toml::minutes(3) + toml::seconds(10));
 toml::value dt(d, t);
-toml::get<toml::datetime>(dt) += toml::years(1);
-toml::get<toml::datetime>(dt) += toml::months(2);
-toml::get<toml::datetime>(dt) += toml::days(10);
+toml::get<toml::local_datetime>(dt) += toml::years(1);
+toml::get<toml::local_datetime>(dt) += toml::months(2);
+toml::get<toml::local_datetime>(dt) += toml::days(10);
 ```
+
+See also [underlying types](#underlying-types).
 
 ## underlying types
 
@@ -394,7 +396,7 @@ types.
 | `string`          | `struct {std::string str; enum kind_t {basic, literal} kind;}` |
 | `date`            | `boost::gregorian::date`                                       |
 | `time`            | `boost::posix_time::time_duration`                             |
-| `datetime`        | `boost::posix_time::ptime`                                     |
+| `local_datetime`  | `boost::posix_time::ptime`                                     |
 | `offset_datetime` | `boost::local_time::local_date_time`                           |
 | `array`           | `boost::container::vector<value>`                              |
 | `table`           | `boost::container::flat_map<key, value>`                       |
@@ -462,7 +464,7 @@ to use Boost.Container.
 | `string`          | `std::string`, `std::string_view`, `boost::string_view`, `boost::string_ref` |
 | `date`            | -                              |
 | `time`            | -                              |
-| `datetime`        | -                              |
+| `local_datetime`  | -                              |
 | `offset_datetime` | -                              |
 | `array`           | container classes (see below). |
 | `table`           | map-like classes (see below).  |
@@ -485,7 +487,7 @@ to use Boost.Container.
 struct value
 {
     typedef boost::variant<boost::blank, boolean, integer, floating, string,
-            date, time, datetime, offset_datetime, array, table> storage_type;
+        date, time, local_datetime, offset_datetime, array, table> storage_type;
 
     enum kind
     {
@@ -496,7 +498,7 @@ struct value
         string_tag          = 4,
         date_tag            = 5,
         time_tag            = 6,
-        datetime_tag        = 7,
+        local_datetime_tag  = 7,
         offset_datetime_tag = 8,
         array_tag           = 9,
         table_tag           = 10,
@@ -516,8 +518,8 @@ struct value
 
     value(const char* v,        string::kind_t k);
     value(const std::string& v, string::kind_t k);
-    value(const date&     d,    const time& t);
-    value(const datetime& dt,   const time_zone_ptr tzp);
+    value(const date&           d,  const time& t);
+    value(const local_datetime& dt, const time_zone_ptr tzp);
 
     // enabled after c++11.
     value(std::string&& v);
