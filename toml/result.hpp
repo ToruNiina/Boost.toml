@@ -24,6 +24,12 @@ struct success
     explicit success(const value_type& val): value(val) {}
     ~success(){}
 
+    template<typename U>
+    explicit success(const U& val, typename boost::enable_if<
+            boost::is_convertible<U, T> >::type* = 0)
+        : value(value_type(val))
+    {}
+
     success(const success& rhs): value(rhs.value){}
     success& operator=(const success& rhs) {value = rhs.value; return *this;}
 
@@ -44,6 +50,12 @@ struct failure
     explicit failure(const value_type& val): value(val) {}
     ~failure(){}
 
+    template<typename U>
+    explicit failure(const U& val, typename boost::enable_if<
+            boost::is_convertible<U, T> >::type* = 0)
+        : value(value_type(val))
+    {}
+
     failure(const failure& rhs): value(rhs.value){}
     failure& operator=(const failure& rhs) {value = rhs.value; return *this;}
 
@@ -56,12 +68,28 @@ struct failure
     value_type value;
 };
 
-template<typename T> success<T> ok(const T& v)  {return success<T>(v);}
-template<typename T> failure<T> err(const T& v) {return failure<T>(v);}
+template<typename T>
+success<typename boost::remove_const<
+    typename boost::remove_reference<T>::type>::type>
+ok(const T& v)
+{
+    return success<typename boost::remove_const<
+        typename boost::remove_reference<T>::type>::type>(v);
+}
+template<typename T>
+failure<typename boost::remove_const<
+    typename boost::remove_reference<T>::type>::type>
+err(const T& v)
+{
+    return failure<typename boost::remove_const<
+        typename boost::remove_reference<T>::type>::type>(v);
+}
 
 #ifdef BOOST_HAS_RVALUE_REFS
-template<typename T> success<T> ok(T&& v)  {return success<T>(std::move(v));}
-template<typename T> failure<T> err(T&& v) {return failure<T>(std::move(v));}
+template<typename T>
+success<T> ok(T&& v)  {return success<T>(std::forward<T>(v));}
+template<typename T>
+failure<T> err(T&& v) {return failure<T>(std::forward<T>(v));}
 #endif
 
 template<typename Ok, typename Err>
@@ -84,6 +112,17 @@ struct result
         if(rhs.is_ok()){this->storage_ = success_type(Ok(rhs.unwrap()));}
         else           {this->storage_ = failure_type(Err(rhs.unwrap_err()));}
     }
+
+    template<typename Ok_>
+    result(const success<Ok_>& s, typename boost::enable_if<
+            boost::is_convertible<Ok_, Ok> >::type* = 0)
+        : storage_(success_type(s.value))
+    {}
+    template<typename Err_>
+    result(const failure<Err_>& f, typename boost::enable_if<
+            boost::is_convertible<Err_, Err> >::type* = 0)
+        : storage_(failure_type(f.value))
+    {}
 
 #ifdef BOOST_HAS_RVALUE_REFS
     result(success_type&& s): storage_(std::move(s)){}
