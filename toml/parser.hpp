@@ -728,6 +728,9 @@ parse_offset_datetime(InputIterator& iter, const InputIterator last)
 template<typename InputIterator>
 result<value, std::string>
 parse_value(InputIterator& iter, const InputIterator last);
+template<typename InputIterator>
+result<std::vector<key>, std::string> // dotted key become vector of keys
+parse_key(InputIterator& iter, const InputIterator last);
 
 template<typename InputIterator>
 result<array, std::string>
@@ -790,6 +793,169 @@ parse_array(InputIterator& iter, const InputIterator last)
             + current_line(first, last));
 }
 
+template<typename InputIterator>
+result<table, std::string>
+parse_inline_table(InputIterator& iter, const InputIterator last)
+{
+    const InputIterator first = iter;
+    if(iter == last)
+    {
+        return err(std::string("toml::detail::parse_inline_table: "
+                    "input is empty"));
+    }
+
+    if(*iter != '{')
+    {
+        return err("toml::detail::parse_inline_table: "
+            "the next token is not an inline table -> " +
+            current_line(first, last));
+    }
+    ++iter;
+
+    table retval;
+    while(iter != last)
+    {
+        maybe<lex_ws>::invoke(iter, last);
+        if(iter != last && *iter == '}')
+        {
+            return ok(retval);
+        }
+        const InputIterator bfr(iter);
+
+        const result<std::vector<key>, std::string> key_r =
+            parse_key(iter, last);
+        if(!key_r)
+        {
+            return err("toml::detail::parse_inline_table: " +
+                    key_r.unwrap_err());
+        }
+
+        const boost::optional<std::string> kvsp =
+            lex_keyval_sep::invoke(iter, last);
+        if(!kvsp)
+        {
+            return err("toml::detail::parse_inline_table: "
+                    "key-value separator `=` missing" + current_line(bfr, last));
+        }
+
+        const result<value, std::string> val_r = parse_value(iter, last);
+        if(!val_r)
+        {
+            return err("toml::detail::parse_inline_table: " +
+                    val_r.unwrap_err());
+        }
+
+        // TODO consider grouped key
+        {
+            retval.insert(std::make_pair(key_r.unwrap().front(), val_r.unwrap()));
+        }
+
+        typedef sequence<maybe<lex_ws>, character<','> > lex_table_separator;
+        const boost::optional<std::string> sp =
+            lex_table_separator::invoke(iter, last);
+        if(!sp)
+        {
+            maybe<lex_ws>::invoke(iter, last);
+            if(iter != last && *iter == '}')
+            {
+                return ok(retval);
+            }
+            else
+            {
+                return err("toml::detail::parse_inline_table: "
+                    "missing table separator `,` -> " + current_line(bfr,last));
+            }
+        }
+    }
+    return err("toml::detail::parse_inline_table: "
+        "inline table did not closed by `}` -> " + current_line(first, last));
+}
+
+template<typename InputIterator>
+result<key, std::string>
+parse_simple_key(InputIterator& iter, const InputIterator last)
+{
+    BOOST_STATIC_ASSERT(boost::is_same<
+            typename boost::iterator_value<InputIterator>::type, char>::value);
+    const InputIterator first = iter;
+    if(first == last)
+    {
+        return err(std::string(
+                    "toml::detail::parse_simple_key: input is empty"));
+    }
+
+    const boost::optional<std::string> unq =
+        lex_unquoted_key::invoke(iter, last);
+    if(unq)
+    {
+        return ok(*unq);
+    }
+
+    const result<toml::string, std::string> bquoted =
+        parse_basic_string(iter, last);
+    if(bquoted)
+    {
+        return ok(bquoted.unwrap().str);
+    }
+
+    const result<toml::string, std::string> lquoted =
+        parse_literal_string(iter, last);
+    if(lquoted)
+    {
+        return ok(lquoted.unwrap().str);
+    }
+
+    return err("toml::detail::parse_simple_key: "
+        "the next token is not a simple key -> " + current_line(first, last));
+}
+
+template<typename InputIterator>
+result<std::vector<key>, std::string>
+parse_key(InputIterator& iter, const InputIterator last)
+{
+    BOOST_STATIC_ASSERT(boost::is_same<
+            typename boost::iterator_value<InputIterator>::type, char>::value);
+    const InputIterator first = iter;
+    if(first == last)
+    {
+        return err(std::string("toml::detail::parse_key: input is empty"));
+    }
+
+    // dotted key -> foo.bar.baz
+    const boost::optional<std::string> dots =
+        lex_dotted_key::invoke(iter, last);
+    if(dots)
+    {
+        std::vector<key> keys;
+        const std::string::const_iterator e(dots->end());
+        std::string::const_iterator i(dots->begin());
+        while(i != e)
+        {
+            const std::string::const_iterator next(std::find(i, e, '.'));
+            const result<key, std::string> k = parse_simple_key(i, next);
+            if(k)
+            {
+                keys.push_back(k.unwrap());
+            }
+            else
+            {
+                return err("toml::detail::parse_key: "
+                    "dotted key contains invalid key -> " + k.unwrap_err());
+            }
+        }
+        return ok(keys);
+    }
+    iter = first;
+
+    // simple key
+    const result<key, std::string> smpl = parse_simple_key(iter, last);
+    if(smpl)
+    {
+        return ok(std::vector<key>(1, smpl.unwrap()));
+    }
+    return err("toml::detail::parse_key: the next token is not a key -> " +
+            current_line(first, last));
+}
 
 template<typename InputIterator>
 result<toml::value, std::string>
@@ -817,6 +983,18 @@ parse_value(InputIterator& iter, const InputIterator last)
     }
     {
         const result<array, std::string> r = parse_array(iter, last);
+        if(r.is_ok())
+        {
+            return ok(r.unwrap());
+        }
+        else if(iter != first)
+        {
+            return err("toml::detail::parse_value: partial match: " +
+                    r.unwrap_err());
+        }
+    }
+    {
+        const result<table, std::string> r = parse_inline_table(iter, last);
         if(r.is_ok())
         {
             return ok(r.unwrap());
