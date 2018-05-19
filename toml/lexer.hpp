@@ -216,6 +216,9 @@ typedef sequence<lex_simple_key,
     > lex_dotted_key;
 typedef either<lex_simple_key, lex_dotted_key> lex_key;
 
+typedef sequence<maybe<lex_ws>, sequence<character<'='>, maybe<lex_ws> >
+    > lex_keyval_sep;
+
 typedef character<'['> lex_std_table_open;
 typedef character<']'> lex_std_table_close;
 typedef sequence<lex_std_table_open, sequence<lex_key, lex_std_table_close>
