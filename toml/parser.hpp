@@ -496,6 +496,231 @@ parse_string(InputIterator& iter, const InputIterator last)
             current_line(first, last));
 }
 
+template<typename InputIterator>
+result<date, std::string>
+parse_local_date(InputIterator& iter, const InputIterator last)
+{
+    const InputIterator first = iter;
+    if(iter == last)
+    {
+        return err(std::string(
+                    "toml::detail::parse_local_date: input is empty"));
+    }
+
+    const boost::optional<std::string> y =
+        lex_date_fullyear::invoke(iter, last);
+    if(!y || *iter != '-')
+    {
+        iter = first;
+        return err("toml::detail::parse_local_date: did not match year -> "
+                + current_line(iter, last));
+    }
+    ++iter;
+
+    const boost::optional<std::string> m =
+        lex_date_month::invoke(iter, last);
+    if(!m || *iter != '-')
+    {
+        iter = first;
+        return err("toml::detail::parse_local_date: did not match month -> "
+                + current_line(iter, last));
+    }
+    ++iter;
+
+    const boost::optional<std::string> d =
+        lex_date_mday::invoke(iter, last);
+    if(!d)
+    {
+        iter = first;
+        return err("toml::detail::parse_local_date: did not match day -> "
+                + current_line(iter, last));
+    }
+    return ok(date(boost::lexical_cast<int>(*y), boost::lexical_cast<int>(*m),
+                   boost::lexical_cast<int>(*d)));
+}
+
+template<typename InputIterator>
+result<time, std::string>
+parse_local_time(InputIterator& iter, const InputIterator last)
+{
+    const InputIterator first = iter;
+    if(iter == last)
+    {
+        return err(std::string(
+                    "toml::detail::parse_local_time: input is empty"));
+    }
+
+    const boost::optional<std::string> h = lex_time_hour::invoke(iter, last);
+    if(!h || *iter != ':')
+    {
+        iter = first;
+        return err("toml::detail::parse_local_time: did not match hour -> " +
+                  current_line(iter, last));
+    }
+    ++iter;
+
+    const boost::optional<std::string> m = lex_time_minute::invoke(iter, last);
+    if(!m || *iter != ':')
+    {
+        iter = first;
+        return err("toml::detail::parse_local_time: did not match min -> " +
+                  current_line(iter, last));
+    }
+    ++iter;
+
+    const boost::optional<std::string> s = lex_time_second::invoke(iter, last);
+    if(!s)
+    {
+        iter = first;
+        return err("toml::detail::parse_local_time: did not match sec -> " +
+                  current_line(iter, last));
+    }
+
+    time tm(hours(boost::lexical_cast<int>(*h)) +
+            minutes(boost::lexical_cast<int>(*m)) +
+            seconds(boost::lexical_cast<int>(*s)));
+
+    if(iter != last && *iter == '.')
+    {
+        ++iter;
+        boost::optional<std::string> subseconds =
+            repeat<lex_digit, at_least<1> >::invoke(iter, last);
+        if(!subseconds)
+        {
+            return err("toml::detail::parse_local_time: a point appeared but "
+                "subsec part did not appeared -> " + current_line(first, last));
+        }
+        switch(subseconds->size() % 3)
+        {
+            case 2: *subseconds += '0';
+            case 1: *subseconds += '0';
+            case 0: break;
+        }
+        tm += milliseconds(boost::lexical_cast<int>(subseconds->substr(0, 3)));
+        if(subseconds->size() >= 6)
+        {
+            tm += microseconds(
+                    boost::lexical_cast<int>(subseconds->substr(3, 3)));
+        }
+#ifdef BOOST_DATE_TIME_HAS_NANOSECONDS
+        if(subseconds->size() >= 9)
+        {
+            tm += nanoseconds(
+                    boost::lexical_cast<int>(subseconds->substr(6, 3)));
+        }
+#endif
+    }
+    return ok(tm);
+}
+
+template<typename InputIterator>
+result<local_datetime, std::string>
+parse_local_datetime(InputIterator& iter, const InputIterator last)
+{
+    const InputIterator first = iter;
+    if(iter == last)
+    {
+        return err(std::string(
+                    "toml::detail::parse_local_datetime: input is empty"));
+    }
+
+    const result<date, std::string> dr = parse_local_date(iter, last);
+    if(!dr)
+    {
+        return err("toml::detail::parse_local_datetime: " + dr.unwrap_err());
+    }
+
+    if(iter == last || (*iter != 'T' && *iter != 't' && *iter != ' '))
+    {
+        return err("toml::detail::parse_local_datetime: "
+            "invalid datetime delimiter -> " + current_line(first, last));
+    }
+    ++iter;
+
+    const result<time, std::string> tr = parse_local_time(iter, last);
+    if(!tr)
+    {
+        return err("toml::detail::parse_local_datetime: " + tr.unwrap_err());
+    }
+    return ok(local_datetime(dr.unwrap(), tr.unwrap()));
+}
+
+template<typename InputIterator>
+result<offset_datetime, std::string>
+parse_offset_datetime(InputIterator& iter, const InputIterator last)
+{
+    const InputIterator first = iter;
+    if(iter == last)
+    {
+        return err(std::string(
+                    "toml::detail::parse_local_datetime: input is empty"));
+    }
+    const result<local_datetime, std::string> ldt =
+        parse_local_datetime(iter, last);
+    if(!ldt)
+    {
+        return err("toml::detail::parse_offset_datetime: " + ldt.unwrap_err());
+    }
+
+    if(*iter == 'Z')
+    {
+        ++iter;
+        return ok(offset_datetime(ldt.unwrap(),
+            time_zone_ptr(new boost::local_time::posix_time_zone("UTC"))));
+    }
+    else if(*iter != '+' && *iter != '-')
+    {
+        return err("toml::detail::parse_offset_datetime: invalid time numoffset"
+                + current_line(first, last));
+    }
+
+    const char sign = *(iter++);
+    boost::posix_time::time_duration offset(0, 0, 0);
+
+    const boost::optional<std::string> offset_h =
+        lex_time_hour::invoke(iter, last);
+    if(!offset_h || *iter != ':')
+    {
+        iter = first;
+        return err("toml::detail::parse_offset_datetime: "
+            "did not match offset-hour -> " + current_line(iter, last));
+    }
+    ++iter;
+
+    const boost::optional<std::string> offset_m =
+        lex_time_minute::invoke(iter, last);
+    if(!offset_m)
+    {
+        iter = first;
+        return err("toml::detail::parse_offset_datetime: "
+            "did not match offset minute" + current_line(iter, last));
+    }
+
+    if(sign == '+')
+    {
+        offset += hours  (boost::lexical_cast<int>(*offset_h));
+        offset += minutes(boost::lexical_cast<int>(*offset_m));
+    }
+    else
+    {
+        offset -= hours  (boost::lexical_cast<int>(*offset_h));
+        offset -= minutes(boost::lexical_cast<int>(*offset_m));
+    }
+
+    boost::local_time::time_zone_names tzn(
+        "TOML User Input", "TML", "", "");
+    boost::local_time::dst_adjustment_offsets dst_offset(
+        boost::posix_time::time_duration(0,0,0),
+        boost::posix_time::time_duration(0,0,0),
+        boost::posix_time::time_duration(0,0,0));
+    boost::shared_ptr<boost::local_time::dst_calc_rule> rules; // null
+
+    return ok(offset_datetime(ldt.unwrap() - offset,
+        time_zone_ptr(new boost::local_time::custom_time_zone(
+                tzn, offset, dst_offset, rules))));
+}
+
+
 // template<typename InputIterator>
 // result<toml::value, std::string>
 // parse_value(InputIterator& iter, const InputIterator last)
