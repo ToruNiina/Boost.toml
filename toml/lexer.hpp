@@ -213,11 +213,11 @@ typedef repeat<either<lex_alpha, either<lex_digit,
         either<character<'-'>, character<'_'> > > >, at_least<1>
     > lex_unquoted_key;
 typedef either<lex_basic_string, lex_literal_string> lex_quoted_key;
-typedef either<lex_unquoted_key, lex_unquoted_key> lex_simple_key;
+typedef either<lex_unquoted_key, lex_quoted_key> lex_simple_key;
 typedef sequence<lex_simple_key,
         repeat<sequence<lex_dot_sep, lex_simple_key>, at_least<1> >
     > lex_dotted_key;
-typedef either<lex_simple_key, lex_dotted_key> lex_key;
+typedef either<lex_dotted_key, lex_simple_key> lex_key;
 
 typedef sequence<maybe<lex_ws>, sequence<character<'='>, maybe<lex_ws> >
     > lex_keyval_sep;
