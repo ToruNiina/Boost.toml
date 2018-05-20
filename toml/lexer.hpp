@@ -162,13 +162,14 @@ typedef sequence<lex_quotation_mark, sequence<repeat<lex_basic_char, unlimited>,
 
 typedef repeat<lex_quotation_mark, exactly<3>
     > lex_ml_basic_string_delim;
-typedef exclude<either<in_range<0x00, 0x1F>,
-        either<character<0x5C>, character<0x7F> > >
+typedef exclude<either<in_range<0x00, 0x1F>, either<character<0x5C>,
+                either<character<0x7F>, lex_ml_basic_string_delim > > >
     > lex_ml_basic_unescaped;
 typedef either<lex_ml_basic_unescaped, lex_escaped
     > lex_ml_basic_char;
 typedef repeat<either<lex_ml_basic_char, either<lex_newline,
-        sequence<lex_escape, sequence<lex_ws, lex_newline> > > >, unlimited
+        sequence<lex_escape, sequence<maybe<lex_ws>, lex_newline> > > >,
+        unlimited
     > lex_ml_basic_body;
 typedef sequence<lex_ml_basic_string_delim, sequence<lex_ml_basic_body,
         lex_ml_basic_string_delim>
@@ -184,11 +185,12 @@ typedef sequence<lex_apostrophe, sequence<repeat<lex_literal_char, unlimited>,
 
 typedef repeat<lex_apostrophe, exactly<3>
     > lex_ml_literal_string_delim;
-typedef exclude<either<in_range<0x00, 0x08>, in_range<0x10, 0x1F> >
+typedef exclude<either<in_range<0x00, 0x08>, either<in_range<0x10, 0x1F>,
+                lex_ml_literal_string_delim> >
     > lex_ml_literal_char;
 typedef repeat<either<lex_ml_literal_char, lex_newline>, unlimited
     > lex_ml_literal_body;
-typedef sequence<lex_ml_literal_string_delim, sequence<lex_ml_literal_char,
+typedef sequence<lex_ml_literal_string_delim, sequence<lex_ml_literal_body,
         lex_ml_literal_string_delim>
     > lex_ml_literal_string;
 
@@ -204,7 +206,8 @@ typedef either<character<'\t'>, exclude<in_range<0x00, 0x19> >
 typedef sequence<lex_comment_start_symbol, repeat<lex_non_eol, unlimited>
     > lex_comment;
 
-typedef sequence<lex_ws, sequence<character<'.'>, lex_ws> > lex_dot_sep;
+typedef sequence<maybe<lex_ws>, sequence<character<'.'>, maybe<lex_ws> >
+    > lex_dot_sep;
 
 typedef repeat<either<lex_alpha, either<lex_digit,
         either<character<'-'>, character<'_'> > > >, at_least<1>
