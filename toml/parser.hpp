@@ -295,16 +295,21 @@ parse_ml_basic_string(InputIterator& iter, const InputIterator last)
             }
             iter = bfr;
         }
+        if(*iter == '\\')
         {
-            typedef sequence<character<'\\'>,
-                repeat<either<lex_ws, lex_newline>, at_least<1> > > trim_ws_nl;
+            typedef sequence<maybe<lex_ws>, sequence<lex_newline,
+                repeat<either<lex_ws, lex_newline>, unlimited>
+                > > trim_ws_nl;
             const InputIterator bfr(iter);
+            ++iter;
             const boost::optional<std::string> trimmed =
                 trim_ws_nl::invoke(iter, last);
             if(!trimmed) {iter = bfr;}
+            else{continue;}
         }
 
-        typedef either<lex_ml_basic_unescaped, lex_newline> lex_ml_basic_letter;
+        typedef either<lex_ml_basic_unescaped,
+                either<character<'"'>, lex_newline> > lex_ml_basic_letter;
         if(*iter == '\\')
         {
             const result<string, std::string> unesc =
