@@ -4,5 +4,6 @@
     const result<tp, std::string> r = psr(iter, token.end());\
     BOOST_CHECK(r.is_ok());\
     if(r){BOOST_CHECK_EQUAL(r.unwrap(), expct);}\
+    else{std::cerr << r << std::endl;}\
     BOOST_CHECK(iter == token.end());\
 } /**/
