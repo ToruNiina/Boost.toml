@@ -89,14 +89,14 @@ parse_integer(InputIterator& iter, const InputIterator last)
                 for(std::reverse_iterator<std::string::const_iterator>
                         i(token->end()), e(token->begin() + 2); i!=e; ++i)
                 {
-                    if     (*i == '1'){retval += base;}
-                    else if(*i == '0' || *i == '_'){/* do nothing. */}
+                    if     (*i == '1'){retval += base; base *= 2;}
+                    else if(*i == '0'){base *= 2;}
+                    else if(*i == '_'){/* do nothing. */}
                     else
                     {
                         throw std::logic_error("toml::detail::parse_integer: "
                             "lexer returns invalid token -> " + *token);
                     }
-                    base *= 2;
                 }
                 return ok(retval);
             }
