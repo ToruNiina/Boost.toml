@@ -173,11 +173,10 @@ parse_floating(InputIterator& iter, const InputIterator last)
             std::remove(token->begin(), token->end(), '_');
         token->erase(token_last, token->end());
         return ok(boost::lexical_cast<floating>(*token));
-
     }
     iter = first;
-    return err("toml::detail::parse_integer: "
-            "the next token is not a integer -> " + current_line(first, last));
+    return err("toml::detail::parse_floating: "
+            "the next token is not a floating -> " + current_line(first, last));
 }
 
 inline std::string read_utf8_codepoint(const std::string& str)
