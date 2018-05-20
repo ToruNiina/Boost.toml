@@ -75,7 +75,7 @@ typedef sequence<character<'n'>, sequence<character<'a'>, character<'n'> >
 typedef sequence<maybe<lex_sign>, either<lex_inf, lex_nan>
     > lex_special_float;
 
-typedef sequence<maybe<either<character<'e'>, character<'E'> > >, lex_dec_int
+typedef sequence<either<character<'e'>, character<'E'> >, lex_dec_int
     > lex_exponent_part;
 
 typedef sequence<lex_digit,
