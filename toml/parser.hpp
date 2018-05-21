@@ -10,6 +10,7 @@
 #include <boost/config.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/static_assert.hpp>
+#include <boost/core/addressof.hpp>
 #include <boost/optional/optional_io.hpp>
 #include <iterator>
 #include <vector>
@@ -834,13 +835,14 @@ parse_inline_table(InputIterator& iter, const InputIterator last)
             return err("toml::detail::parse_inline_table: " +
                     key_r.unwrap_err());
         }
+        const std::vector<key>& keys = key_r.unwrap();
 
         const boost::optional<std::string> kvsp =
             lex_keyval_sep::invoke(iter, last);
         if(!kvsp)
         {
             return err("toml::detail::parse_inline_table: "
-                    "key-value separator `=` missing" + current_line(bfr, last));
+                "key-value separator `=` missing" + current_line(bfr, last));
         }
 
         const result<value, std::string> val_r = parse_value(iter, last);
@@ -850,9 +852,33 @@ parse_inline_table(InputIterator& iter, const InputIterator last)
                     val_r.unwrap_err());
         }
 
-        // TODO consider grouped key
+        table* tab = boost::addressof(retval);
+        for(std::size_t i=0, e=keys.size(); i<e; ++i)
         {
-            retval.insert(std::make_pair(key_r.unwrap().front(), val_r.unwrap()));
+            const key& k = keys.at(i);
+            if(i == e-1)
+            {
+                tab->insert(std::make_pair(k, val_r.unwrap()));
+            }
+            else
+            {
+                if(tab->count(k) != 1)
+                {
+                    (*tab)[k] = value(table());
+                    tab = boost::addressof(tab->at(k).template get<table>());
+                }
+                else
+                {
+                    if(!tab->at(k).is(value::table_tag))
+                    {
+                        return err("toml::detail::parse_inline_table: "
+                            "dotted key overlaps. "
+                            "corresponding value is not a table -> " +
+                            current_line(first, last));
+                    }
+                    tab = boost::addressof(tab->at(k).template get<table>());
+                }
+            }
         }
 
         typedef sequence<maybe<lex_ws>, character<','> > lex_table_separator;
