@@ -975,8 +975,7 @@ parse_key(InputIterator& iter, const InputIterator last)
         std::string::const_iterator i(dots->begin());
         while(i != e)
         {
-            const std::string::const_iterator next(std::find(i, e, '.'));
-            const result<key, std::string> k = parse_simple_key(i, next);
+            const result<key, std::string> k = parse_simple_key(i, e);
             if(k)
             {
                 keys.push_back(k.unwrap());
@@ -987,11 +986,11 @@ parse_key(InputIterator& iter, const InputIterator last)
                     "dotted key contains invalid key -> " + k.unwrap_err());
             }
 
-            if(i != next) // check whether whole key is consumed
+            if(!(i == e || *i == '.'))
             {
                 return err("toml::detail::parse_key: "
                     "dotted key contains invalid key -> " +
-                    current_line(first, last));
+                    current_line(i, last));
             }
             if(i != e)
             {
