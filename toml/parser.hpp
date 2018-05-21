@@ -960,6 +960,17 @@ parse_key(InputIterator& iter, const InputIterator last)
                 return err("toml::detail::parse_key: "
                     "dotted key contains invalid key -> " + k.unwrap_err());
             }
+
+            if(i != next) // check whether whole key is consumed
+            {
+                return err("toml::detail::parse_key: "
+                    "dotted key contains invalid key -> " +
+                    current_line(first, last));
+            }
+            if(i != e)
+            {
+                ++i; // to skip `.`
+            }
         }
         return ok(keys);
     }
