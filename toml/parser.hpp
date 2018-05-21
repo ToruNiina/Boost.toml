@@ -889,25 +889,38 @@ parse_simple_key(InputIterator& iter, const InputIterator last)
                     "toml::detail::parse_simple_key: input is empty"));
     }
 
+    if(*first == '"')
+    {
+        const result<toml::string, std::string> bquoted =
+            parse_basic_string(iter, last);
+        if(bquoted)
+        {
+            return ok(bquoted.unwrap().str);
+        }
+        else
+        {
+            return err(bquoted.unwrap_err());
+        }
+    }
+    else if(*first == '\'')
+    {
+        const result<toml::string, std::string> lquoted =
+            parse_literal_string(iter, last);
+        if(lquoted)
+        {
+            return ok(lquoted.unwrap().str);
+        }
+        else
+        {
+            return err(lquoted.unwrap_err());
+        }
+    }
+
     const boost::optional<std::string> unq =
         lex_unquoted_key::invoke(iter, last);
     if(unq)
     {
         return ok(*unq);
-    }
-
-    const result<toml::string, std::string> bquoted =
-        parse_basic_string(iter, last);
-    if(bquoted)
-    {
-        return ok(bquoted.unwrap().str);
-    }
-
-    const result<toml::string, std::string> lquoted =
-        parse_literal_string(iter, last);
-    if(lquoted)
-    {
-        return ok(lquoted.unwrap().str);
     }
 
     return err("toml::detail::parse_simple_key: "
