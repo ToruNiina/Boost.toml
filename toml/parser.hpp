@@ -802,6 +802,41 @@ parse_array(InputIterator& iter, const InputIterator last)
 }
 
 template<typename InputIterator>
+result<std::pair<std::vector<key>, value>, std::string>
+parse_key_value_pair(InputIterator& iter, const InputIterator last)
+{
+    const InputIterator first = iter;
+    if(iter == last)
+    {
+        return err(std::string(
+                    "toml::detail::parse_key_value_pair: input is empty"));
+    }
+
+    const result<std::vector<key>, std::string> key_r = parse_key(iter, last);
+    if(!key_r)
+    {
+        return err("toml::detail::parse_key_value_pair: " +
+                key_r.unwrap_err());
+    }
+
+    const boost::optional<std::string> kvsp =
+        lex_keyval_sep::invoke(iter, last);
+    if(!kvsp)
+    {
+        return err("toml::detail::parse_key_value_pair: "
+            "key-value separator `=` missing" + current_line(first, last));
+    }
+
+    const result<value, std::string> val_r = parse_value(iter, last);
+    if(!val_r)
+    {
+        return err("toml::detail::parse_key_value_pair: " +
+                val_r.unwrap_err());
+    }
+    return ok(std::make_pair(key_r.unwrap(), val_r.unwrap()));
+}
+
+template<typename InputIterator>
 result<table, std::string>
 parse_inline_table(InputIterator& iter, const InputIterator last)
 {
@@ -830,29 +865,15 @@ parse_inline_table(InputIterator& iter, const InputIterator last)
         }
         const InputIterator bfr(iter);
 
-        const result<std::vector<key>, std::string> key_r =
-            parse_key(iter, last);
-        if(!key_r)
+        const result<std::pair<std::vector<key>, value>, std::string> kv_r =
+            parse_key_value_pair(iter, last);
+        if(!kv_r)
         {
             return err("toml::detail::parse_inline_table: " +
-                    key_r.unwrap_err());
+                    kv_r.unwrap_err());
         }
-        const std::vector<key>& keys = key_r.unwrap();
-
-        const boost::optional<std::string> kvsp =
-            lex_keyval_sep::invoke(iter, last);
-        if(!kvsp)
-        {
-            return err("toml::detail::parse_inline_table: "
-                "key-value separator `=` missing" + current_line(bfr, last));
-        }
-
-        const result<value, std::string> val_r = parse_value(iter, last);
-        if(!val_r)
-        {
-            return err("toml::detail::parse_inline_table: " +
-                    val_r.unwrap_err());
-        }
+        const std::vector<key>& keys = kv_r.unwrap().first;
+        const value&            val  = kv_r.unwrap().second;
 
         table* tab = boost::addressof(retval);
         for(std::size_t i=0, e=keys.size(); i<e; ++i)
@@ -860,7 +881,7 @@ parse_inline_table(InputIterator& iter, const InputIterator last)
             const key& k = keys.at(i);
             if(i == e-1)
             {
-                tab->insert(std::make_pair(k, val_r.unwrap()));
+                tab->insert(std::make_pair(k, val));
             }
             else
             {
@@ -871,14 +892,17 @@ parse_inline_table(InputIterator& iter, const InputIterator last)
                 }
                 else
                 {
-                    if(!tab->at(k).is(value::table_tag))
+                    if(tab->at(k).is(value::table_tag))
+                    {
+                        tab = boost::addressof(tab->at(k).template get<table>());
+                    }
+                    else
                     {
                         return err("toml::detail::parse_inline_table: "
                             "dotted key overlaps. "
                             "corresponding value is not a table -> " +
                             current_line(first, last));
                     }
-                    tab = boost::addressof(tab->at(k).template get<table>());
                 }
             }
         }
