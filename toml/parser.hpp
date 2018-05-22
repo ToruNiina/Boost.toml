@@ -47,13 +47,16 @@ std::string format_dotted_keys(InputIterator first, const InputIterator last)
     return retval;
 }
 
-// utility
 template<typename InputIterator>
 result<boost::blank, std::string>
 insert_nested_key(table& root, const toml::value& v,
                   InputIterator iter, const InputIterator last)
 {
+    BOOST_STATIC_ASSERT(boost::is_same<
+            typename boost::iterator_value<InputIterator>::type, key>::value);
     const InputIterator first(iter);
+    assert(iter != last);
+
     table* tab = boost::addressof(root);
     for(; iter != last; ++iter)
     {
