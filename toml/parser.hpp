@@ -932,6 +932,7 @@ parse_inline_table(InputIterator& iter, const InputIterator last)
         maybe<lex_ws>::invoke(iter, last);
         if(iter != last && *iter == '}')
         {
+            ++iter; // skip `}`
             return ok(retval);
         }
         const InputIterator bfr(iter);
@@ -962,6 +963,7 @@ parse_inline_table(InputIterator& iter, const InputIterator last)
             maybe<lex_ws>::invoke(iter, last);
             if(iter != last && *iter == '}')
             {
+                ++iter; // skip `}`
                 return ok(retval);
             }
             else
