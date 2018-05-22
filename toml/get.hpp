@@ -7,6 +7,7 @@
 #include <toml/type_traits.hpp>
 #include <toml/value.hpp>
 #include <boost/format.hpp>
+#include <boost/type_index.hpp>
 
 namespace toml
 {
