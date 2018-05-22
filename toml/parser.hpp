@@ -764,6 +764,7 @@ parse_array(InputIterator& iter, const InputIterator last)
 
         if(iter != last && *iter == ']')
         {
+            ++iter; // skip ']'
             return ok(retval);
         }
 
@@ -785,6 +786,7 @@ parse_array(InputIterator& iter, const InputIterator last)
             lex_ws_comment_newline::invoke(iter, last);
             if(iter != last && *iter == ']')
             {
+                ++iter; // skip ']'
                 return ok(retval);
             }
             else
