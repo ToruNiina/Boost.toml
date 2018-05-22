@@ -943,7 +943,7 @@ parse_simple_key(InputIterator& iter, const InputIterator last)
 
     if(*first == '"')
     {
-        const result<toml::string, std::string> bquoted =
+        const result<string, std::string> bquoted =
             parse_basic_string(iter, last);
         if(bquoted)
         {
@@ -956,7 +956,7 @@ parse_simple_key(InputIterator& iter, const InputIterator last)
     }
     else if(*first == '\'')
     {
-        const result<toml::string, std::string> lquoted =
+        const result<string, std::string> lquoted =
             parse_literal_string(iter, last);
         if(lquoted)
         {
@@ -1038,7 +1038,7 @@ parse_key(InputIterator& iter, const InputIterator last)
 }
 
 template<typename InputIterator>
-result<toml::value, std::string>
+result<value, std::string>
 parse_value(InputIterator& iter, const InputIterator last)
 {
     BOOST_STATIC_ASSERT(boost::is_same<
