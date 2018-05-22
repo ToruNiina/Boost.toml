@@ -32,6 +32,77 @@ std::string current_line(const InputIterator first, const InputIterator last)
     return std::string(first, std::find(first, last, '\n'));
 }
 
+template<typename InputIterator>
+std::string format_dotted_keys(InputIterator first, const InputIterator last)
+{
+    BOOST_STATIC_ASSERT(boost::is_same<
+            typename boost::iterator_value<InputIterator>::type, key>::value);
+
+    std::string retval(*first++);
+    for(; first != last; ++first)
+    {
+        retval += '.';
+        retval += *first;
+    }
+    return retval;
+}
+
+// utility
+template<typename InputIterator>
+result<boost::blank, std::string>
+insert_nested_key(table& root, const toml::value& v,
+                  InputIterator iter, const InputIterator last)
+{
+    const InputIterator first(iter);
+    table* tab = boost::addressof(root);
+    for(; iter != last; ++iter)
+    {
+        const key& k = *iter;
+        InputIterator next(iter); ++next;
+        if(next == last) // k is the last key
+        {
+            if(tab->count(k) == 1)
+            {
+                return err("toml::detail::insert_nested_key: value already "
+                    "exists -> " + format_dotted_keys(first, last));
+            }
+            tab->insert(std::make_pair(k, v));
+            return ok(boost::blank());
+        }
+        else
+        {
+            // if there is no corresponding value, insert it first.
+            if(tab->count(k) == 0) {(*tab)[k] = value(table());}
+
+            // type checking...
+            if(tab->at(k).is(value::table_tag))
+            {
+                tab = boost::addressof((*tab)[k].template get<table>());
+            }
+            else if(tab->at(k).is(value::array_tag)) // array-of-table case
+            {
+                array& a = (*tab)[k].template get<array>();
+                if(!a.back().is(value::table_tag))
+                {
+                    std::ostringstream oss;
+                    oss << "toml::detail::insert_nested_key: invalid key "
+                        << format_dotted_keys(first, last) << ": value is not a"
+                        << " table but an array of " << a.back().which() << 's';
+                    return err(oss.str());
+                }
+                tab = boost::addressof(a.back().template get<table>());
+            }
+            else
+            {
+                std::ostringstream oss;
+                oss << "toml::detail::insert_nested_key: invalid key "
+                    << format_dotted_keys(first, last) << ": value is not a"
+                    << " table but a " << tab->at(k).which();
+                return err(oss.str());
+            }
+        }
+    }
+}
 
 // returns iterator that points next of the value
 // t r u e
@@ -875,36 +946,12 @@ parse_inline_table(InputIterator& iter, const InputIterator last)
         const std::vector<key>& keys = kv_r.unwrap().first;
         const value&            val  = kv_r.unwrap().second;
 
-        table* tab = boost::addressof(retval);
-        for(std::size_t i=0, e=keys.size(); i<e; ++i)
+        const result<boost::blank, std::string> inserted =
+            insert_nested_key(retval, val, keys.begin(), keys.end());
+        if(!inserted)
         {
-            const key& k = keys.at(i);
-            if(i == e-1)
-            {
-                tab->insert(std::make_pair(k, val));
-            }
-            else
-            {
-                if(tab->count(k) != 1)
-                {
-                    (*tab)[k] = value(table());
-                    tab = boost::addressof(tab->at(k).template get<table>());
-                }
-                else
-                {
-                    if(tab->at(k).is(value::table_tag))
-                    {
-                        tab = boost::addressof(tab->at(k).template get<table>());
-                    }
-                    else
-                    {
-                        return err("toml::detail::parse_inline_table: "
-                            "dotted key overlaps. "
-                            "corresponding value is not a table -> " +
-                            current_line(first, last));
-                    }
-                }
-            }
+            return err("toml::detail::parse_inline_table: " +
+                    inserted.unwrap_err());
         }
 
         typedef sequence<maybe<lex_ws>, character<','> > lex_table_separator;
