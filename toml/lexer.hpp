@@ -163,7 +163,7 @@ typedef sequence<lex_quotation_mark, sequence<repeat<lex_basic_char, unlimited>,
 typedef repeat<lex_quotation_mark, exactly<3>
     > lex_ml_basic_string_delim;
 typedef exclude<either<in_range<0x00, 0x1F>, either<character<0x5C>,
-                either<character<0x7F>, lex_ml_basic_string_delim > > >
+                either<character<0x7F>, lex_ml_basic_string_delim> > >
     > lex_ml_basic_unescaped;
 typedef either<lex_ml_basic_unescaped, lex_escaped
     > lex_ml_basic_char;
@@ -186,7 +186,7 @@ typedef sequence<lex_apostrophe, sequence<repeat<lex_literal_char, unlimited>,
 typedef repeat<lex_apostrophe, exactly<3>
     > lex_ml_literal_string_delim;
 typedef exclude<either<in_range<0x00, 0x08>, either<in_range<0x10, 0x1F>,
-                lex_ml_literal_string_delim> >
+                either<character<0x7F>, lex_ml_literal_string_delim> > >
     > lex_ml_literal_char;
 typedef repeat<either<lex_ml_literal_char, lex_newline>, unlimited
     > lex_ml_literal_body;
