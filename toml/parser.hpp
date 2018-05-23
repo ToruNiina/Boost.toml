@@ -1228,6 +1228,80 @@ parse_value(InputIterator& iter, const InputIterator last)
             current_line(first, last));
 }
 
+template<typename InputIterator>
+result<std::vector<key>, std::string>
+parse_table_key(InputIterator& iter, const InputIterator last)
+{
+    const InputIterator first = iter;
+    if(iter == last)
+    {
+        return err(std::string(
+                    "toml::detail::parse_table_key: input is empty"));
+    }
+
+    const boost::optional<std::string> open =
+        lex_std_table_open::invoke(iter, last);
+    if(!open || iter == last)
+    {
+        iter = first;
+        return err("toml::detail::parse_table_key: not a table title -> " +
+                current_line(first, last));
+    }
+
+    const result<std::vector<key>, std::string> keys = parse_key(iter, last);
+    if(!keys)
+    {
+        return err("toml::detail::parse_table_key: invalid key in table title "
+                "-> " + current_line(first, last));
+    }
+
+    const boost::optional<std::string> close =
+        lex_std_table_close::invoke(iter, last);
+    if(!close)
+    {
+        return err("toml::detail::parse_table_key: table title is not closed by"
+                " `]` -> " + current_line(first, last));
+    }
+    return keys;
+}
+
+template<typename InputIterator>
+result<std::vector<key>, std::string>
+parse_array_table_key(InputIterator& iter, const InputIterator last)
+{
+    const InputIterator first = iter;
+    if(iter == last)
+    {
+        return err(std::string(
+                    "toml::detail::parse_array_table_key: input is empty"));
+    }
+
+    const boost::optional<std::string> open =
+        lex_array_table_open::invoke(iter, last);
+    if(!open || iter == last)
+    {
+        iter = first;
+        return err("toml::detail::parse_array_table_key: not a table title -> "
+                + current_line(first, last));
+    }
+
+    const result<std::vector<key>, std::string> keys = parse_key(iter, last);
+    if(!keys)
+    {
+        return err("toml::detail::parse_array_table_key: invalid key in table "
+                "title -> " + current_line(first, last));
+    }
+
+    const boost::optional<std::string> close =
+        lex_array_table_close::invoke(iter, last);
+    if(!close)
+    {
+        return err("toml::detail::parse_array_table_key: table title is not "
+                "closed by `]` -> " + current_line(first, last));
+    }
+    return keys;
+}
+
 } // detail
 
 // inline toml::table parse(const std::string& fname)
