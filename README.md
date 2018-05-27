@@ -19,6 +19,7 @@ __NOTE__: This library is not a part of Boost C++ Library.
     - [getting `toml::table`](#getting-tomltable)
     - [`toml::array` of `toml::array` having different types each other](#tomlarray-of-tomlarray-having-different-types-each-other)
     - [performance of getting `toml::array` or `toml::table`](#performance-of-getting-tomlarray-or-tomltable)
+- [handling dotted keys](#handling-dotted-keys)
 - [confirming value type](#confirming-value-type)
 - [visiting value that has unknown type](#visiting-value-that-has-unknown-type)
 - [formatting toml values](#formatting-toml-values)
@@ -287,6 +288,29 @@ std::int64_t i  = toml::get<std::int64_t>(ar.at(0));
 
 Although it is a bit boring to call `toml::get` for all the elements in the
 array, but there is a tradeoff between speed and easiness.
+
+## handling dotted keys
+
+Boost.toml regards dotted keys as a table.
+
+```toml
+physical.color = "red"
+physical.shape = "sphere"
+# ... is same as
+physical = {color = "red", shape = "sphere"}
+# or
+[physical]
+color = "red"
+shape = "sphere"
+```
+
+Codes to get the variables will be like this.
+
+```cpp
+const auto& physical = toml::get<toml::table>(data.at("physical"));
+const auto& color    = toml::get<std::string>(physical.at("color"));
+const auto& shape    = toml::get<std::string>(physical.at("shape"));
+```
 
 ## confirming value type
 
