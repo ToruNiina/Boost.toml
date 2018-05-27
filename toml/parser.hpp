@@ -1303,7 +1303,7 @@ parse_array_table_key(InputIterator& iter, const InputIterator last)
 
 // parse table body (key-value pairs until the iter hits the next [tablekey])
 template<typename InputIterator>
-result<std::vector<std::pair<std::vector<key>, value> >, std::string>
+result<table, std::string>
 parse_ml_table(InputIterator& iter, const InputIterator last)
 {
     const InputIterator first(iter);
@@ -1316,7 +1316,7 @@ parse_ml_table(InputIterator& iter, const InputIterator last)
             sequence<maybe<lex_comment>, lex_newline> >, unlimited> skip_line;
     skip_line::invoke(iter, last);
 
-    std::vector<std::pair<std::vector<key>, value> > kvs;
+    table tab;
     while(iter != last)
     {
         lex_ws::invoke(iter, last);
@@ -1327,7 +1327,7 @@ parse_ml_table(InputIterator& iter, const InputIterator last)
             if(tabkey || iter != bfr)
             {
                 iter = bfr;
-                return ok(kvs);
+                return ok(tab);
             }
         }
         {
@@ -1336,7 +1336,7 @@ parse_ml_table(InputIterator& iter, const InputIterator last)
             if(tabkey || iter != bfr)
             {
                 iter = bfr;
-                return ok(kvs);
+                return ok(tab);
             }
         }
 
@@ -1344,7 +1344,14 @@ parse_ml_table(InputIterator& iter, const InputIterator last)
             kv(parse_key_value_pair(iter, last));
         if(kv)
         {
-            kvs.push_back(kv.unwrap());
+            const std::vector<key>& keys = kv.unwrap().first;
+            const value&            val  = kv.unwrap().second;
+            const result<boost::blank, std::string> inserted =
+                insert_nested_key(tab, val, keys.begin(), keys.end());
+            if(!inserted)
+            {
+                return err(inserted.unwrap_err());
+            }
         }
         else
         {
@@ -1353,7 +1360,7 @@ parse_ml_table(InputIterator& iter, const InputIterator last)
         }
         skip_line::invoke(iter, last);
     }
-    return ok(kvs);
+    return ok(tab);
 }
 
 } // detail
