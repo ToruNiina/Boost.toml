@@ -35,8 +35,8 @@ get(value& v)
     }
     catch(boost::bad_get const& bg)
     {
-        throw bad_get((boost::format("toml::get: toml value has type `%1%`, "
-            "but type `%2%` is specified.") % v.which() %
+        throw bad_get((boost::format("toml::get: type of toml value is "
+            "`toml::%1%`, but type `%2%` is specified.") % v.which() %
             boost::typeindex::type_id<T>().pretty_name()).str());
     }
 }
@@ -51,8 +51,8 @@ get(value const& v)
     }
     catch(boost::bad_get const& bg)
     {
-        throw bad_get((boost::format("toml::get: toml value has type `%1%`, "
-            "but type `%2%` is specified.") % v.which() %
+        throw bad_get((boost::format("toml::get: type of toml value is "
+            "`toml::%1%`, but type `%2%` is specified.") % v.which() %
             boost::typeindex::type_id<T>().pretty_name()).str());
     }
 }
@@ -68,8 +68,8 @@ get(value& v)
     }
     catch(boost::bad_get const& bg)
     {
-        throw bad_get((boost::format("toml::get: toml value has type `%1%`, "
-            "but type `%2%` is specified.") % v.which() %
+        throw bad_get((boost::format("toml::get: type of toml value is "
+            "`toml::%1%`, but type `%2%` is specified.") % v.which() %
             boost::typeindex::type_id<T>().pretty_name()).str());
     }
 }
@@ -83,8 +83,8 @@ get(value const& v)
     }
     catch(boost::bad_get const& bg)
     {
-        throw bad_get((boost::format("toml::get: toml value has type `%1%`, "
-            "but type `%2%` is specified.") % v.which() %
+        throw bad_get((boost::format("toml::get: type of toml value is "
+            "`toml::%1%`, but type `%2%` is specified.") % v.which() %
             boost::typeindex::type_id<T>().pretty_name()).str());
     }
 }
@@ -106,8 +106,8 @@ get(const toml::value& v)
     }
     catch(boost::bad_get const& bg)
     {
-        throw bad_get((boost::format("toml::get: toml value has type `%1%`, "
-            "but type `%2%` is specified.") % v.which() %
+        throw bad_get((boost::format("toml::get: type of toml value is "
+            "`toml::%1%`, but type `%2%` is specified.") % v.which() %
             boost::typeindex::type_id<T>().pretty_name()).str());
     }
 }
@@ -126,8 +126,8 @@ get(const toml::value& v)
     }
     catch(boost::bad_get const& bg)
     {
-        throw bad_get((boost::format("toml::get: toml value has type `%1%`, "
-            "but type `%2%` is specified.") % v.which() %
+        throw bad_get((boost::format("toml::get: type of toml value is "
+            "`toml::%1%`, but type `%2%` is specified.") % v.which() %
             boost::typeindex::type_id<T>().pretty_name()).str());
     }
 }
@@ -143,8 +143,8 @@ get(const toml::value& v)
     }
     catch(boost::bad_get const& bg)
     {
-        throw bad_get((boost::format("toml::get: toml value has type `%1%`, "
-            "but type `%2%` is specified.") % v.which() %
+        throw bad_get((boost::format("toml::get: type of toml value is "
+            "`toml::%1%`, but type `%2%` is specified.") % v.which() %
             boost::typeindex::type_id<T>().pretty_name()).str());
     }
 }
@@ -169,8 +169,8 @@ get(const toml::value& v)
     }
     catch(boost::bad_get const& bg)
     {
-        throw bad_get((boost::format("toml::get: toml value has type `%1%`, "
-            "but type `%2%` is specified.") % v.which() %
+        throw bad_get((boost::format("toml::get: type of toml value is "
+            "`toml::%1%`, but type `%2%` is specified.") % v.which() %
             boost::typeindex::type_id<Array>().pretty_name()).str());
     }
 
@@ -188,10 +188,10 @@ get(const toml::value& v)
         Array retval;
         if(ar.size() != retval.size())
         {
-            throw std::out_of_range((boost::format("toml::get<%1%>: specified size "
-                "differs from its actual size (%2% != %3%).") %
-                boost::typeindex::type_id<Array>().pretty_name() % retval.size() %
-                ar.size()).str());
+            throw std::out_of_range((boost::format("toml::get<%1%>: specified "
+                "size differs from its actual size (%2% != %3%).") %
+                boost::typeindex::type_id<Array>().pretty_name() %
+                retval.size() % ar.size()).str());
         }
 
         typename Array::iterator out(retval.begin());
@@ -203,8 +203,8 @@ get(const toml::value& v)
     }
     catch(boost::bad_get const& bg) // thrown from v.get<toml::array>
     {
-        throw bad_get((boost::format("toml::get: toml value has type `%1%`, "
-            "but type `%2%` is specified.") % v.which() %
+        throw bad_get((boost::format("toml::get: type of toml value is "
+            "`toml::%1%`, but type `%2%` is specified.") % v.which() %
             boost::typeindex::type_id<Array>().pretty_name()).str());
     }
 }
@@ -226,8 +226,8 @@ get(const toml::value& v)
     }
     catch(boost::bad_get const& bg) // thrown from v.get<toml::table>
     {
-        throw bad_get((boost::format("toml::get: toml value has type `%1%`, "
-            "but type `%2%` is specified.") % v.which() %
+        throw bad_get((boost::format("toml::get: type of toml value is "
+            "`toml::%1%`, but type `%2%` is specified.") % v.which() %
             boost::typeindex::type_id<Map>().pretty_name()).str());
     }
 }
@@ -252,8 +252,8 @@ get(const toml::value& v)
     }
     catch(boost::bad_get const& bg)
     {
-        throw bad_get((boost::format("toml::get: toml value has type `%1%`, "
-            "but type `%2%` is specified.") % v.which() %
+        throw bad_get((boost::format("toml::get: type of toml value is "
+            "`toml::%1%`, but type `%2%` is specified.") % v.which() %
             boost::typeindex::type_id<Pair>().pretty_name()).str());
     }
 }
@@ -289,8 +289,8 @@ get(const toml::value& v)
     }
     catch(boost::bad_get const& bg)
     {
-        throw bad_get((boost::format("toml::get: toml value has type `%1%`, "
-            "but type `%2%` is specified.") % v.which() %
+        throw bad_get((boost::format("toml::get: type of toml value is "
+            "`toml::%1%`, but type `%2%` is specified.") % v.which() %
             boost::typeindex::type_id<Tuple>().pretty_name()).str());
     }
 }

@@ -155,7 +155,7 @@ std::string s = toml::get<std::string>(v);
 
 // exception thrown. the message would be something like this.
 // terminate called after throwing an instance of 'toml::bad_get'
-//   what():  toml::get: toml value has type `integer`, but type `std::basic_string<char, std::char_traits<char>, std::allocator<char> >` is specified.
+//   what():  toml::get: toml value has type `toml::integer`, but type `std::basic_string<char, std::char_traits<char>, std::allocator<char> >` is specified.
 ```
 
 ### getting `toml::array`
@@ -292,7 +292,7 @@ array, but there is a tradeoff between speed and easiness.
 
 If you pass wrong template argument to `toml::get`, `toml::bad_get` (that is
 derived from `std::exception`) will be thrown. Before using `toml::get`, it
-should be known what type does the value have.
+should be known what type does the value actually have.
 
 ```cpp
 toml::value v(3.14);
@@ -300,7 +300,7 @@ std::string s = toml::get<std::string>(v);
 
 // exception thrown. the message would be something like this.
 // terminate called after throwing an instance of 'toml::bad_get'
-//   what():  toml::get: toml value has type `float`, but type `std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >` is specified.
+//   what():  toml::get: toml value has type `toml::float`, but type `std::basic_string<char, std::char_traits<char>, std::allocator<char> >` is specified.
 ```
 
 When you cannot know actually what type is contained in the data file,
