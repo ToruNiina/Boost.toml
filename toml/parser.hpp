@@ -105,6 +105,7 @@ insert_nested_key(table& root, const toml::value& v,
             }
         }
     }
+    return err(std::string("toml::detail::insert_nested_key: never reach here"));
 }
 
 // returns iterator that points next of the value
