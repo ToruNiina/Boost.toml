@@ -23,7 +23,7 @@ namespace toml
 namespace detail
 {
 
-// for error messages. not for parser.
+// for error messages.
 template<typename InputIterator>
 std::string current_line(const InputIterator first, const InputIterator last)
 {
@@ -32,6 +32,7 @@ std::string current_line(const InputIterator first, const InputIterator last)
     return std::string(first, std::find(first, last, '\n'));
 }
 
+// for error messages.
 template<typename InputIterator>
 std::string format_dotted_keys(InputIterator first, const InputIterator last)
 {
@@ -108,9 +109,6 @@ insert_nested_key(table& root, const toml::value& v,
     return err(std::string("toml::detail::insert_nested_key: never reach here"));
 }
 
-// returns iterator that points next of the value
-// t r u e
-//         ^ return here
 template<typename InputIterator>
 result<boolean, std::string>
 parse_boolean(InputIterator& iter, const InputIterator last)
@@ -1301,6 +1299,61 @@ parse_array_table_key(InputIterator& iter, const InputIterator last)
                 "closed by `]` -> " + current_line(first, last));
     }
     return keys;
+}
+
+// parse table body (key-value pairs until the iter hits the next [tablekey])
+template<typename InputIterator>
+result<std::vector<std::pair<std::vector<key>, value> >, std::string>
+parse_ml_table(InputIterator& iter, const InputIterator last)
+{
+    const InputIterator first(iter);
+    if(first == last)
+    {
+        return err(std::string("toml::detail::parse_ml_table: input is empty"));
+    }
+
+    typedef repeat<sequence<maybe<lex_ws>,
+            sequence<maybe<lex_comment>, lex_newline> >, unlimited> skip_line;
+    skip_line::invoke(iter, last);
+
+    std::vector<std::pair<std::vector<key>, value> > kvs;
+    while(iter != last)
+    {
+        lex_ws::invoke(iter, last);
+        const InputIterator bfr(iter);
+        {
+            const result<std::vector<key>, std::string>
+                tabkey(parse_array_table_key(iter, last));
+            if(tabkey || iter != bfr)
+            {
+                iter = bfr;
+                return ok(kvs);
+            }
+        }
+        {
+            const result<std::vector<key>, std::string>
+                tabkey(parse_table_key(iter, last));
+            if(tabkey || iter != bfr)
+            {
+                iter = bfr;
+                return ok(kvs);
+            }
+        }
+
+        const result<std::pair<std::vector<key>, value>, std::string>
+            kv(parse_key_value_pair(iter, last));
+        if(kv)
+        {
+            kvs.push_back(kv.unwrap());
+        }
+        else
+        {
+            return err("toml::detail::parse_ml_table: invalid line appeared -> "
+                + current_line(bfr, last));
+        }
+        skip_line::invoke(iter, last);
+    }
+    return ok(kvs);
 }
 
 } // detail
