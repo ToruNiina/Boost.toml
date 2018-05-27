@@ -17,7 +17,6 @@ BOOST_CONSTEXPR inline std::size_t forceinline()
     return std::numeric_limits<std::size_t>::max();
 }
 
-// TODO fix everything
 struct serializer : boost::static_visitor<std::string>
 {
     serializer(const std::size_t w): width_(w){}
@@ -73,6 +72,7 @@ struct serializer : boost::static_visitor<std::string>
             }
         }
     }
+    // TODO format datetime
     std::string operator()(const date& v) const
     {
         std::ostringstream oss;
