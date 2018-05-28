@@ -1392,6 +1392,58 @@ parse_ml_table(InputIterator& iter, const InputIterator last)
     return ok(tab);
 }
 
+template<typename InputIterator>
+result<table, std::string>
+parse_toml_file(InputIterator& iter, const InputIterator last)
+{
+    const InputIterator first(iter);
+    if(first == last)
+    {
+        return err(std::string("toml::detail::parse_toml_file: input is empty"));
+    }
+
+    table data;
+    {
+        const result<table, std::string> tab = parse_ml_table(iter, last);
+        if(tab) {data = tab.unwrap();}
+        else    {return err(tab.unwrap_err());}
+    }
+    while(iter != last)
+    {
+        const InputIterator bfr(iter);
+        {
+            const result<std::vector<key>, std::string>
+                tabkey(parse_array_table_key(iter, last));
+            if(tabkey)
+            {
+                const result<table, std::string> tab = parse_ml_table(iter, last);
+                if(!tab){return err(tab.unwrap_err());}
+                const result<boost::blank, std::string> inserted(
+                    insert_nested_key(data, tab.unwrap(),
+                        tabkey.unwrap().begin(), tabkey.unwrap().end(), true));
+                if(!inserted) {return err(inserted.unwrap_err());}
+                continue;
+            }
+        }
+        {
+            const result<std::vector<key>, std::string>
+                tabkey(parse_table_key(iter, last));
+            if(tabkey)
+            {
+                const result<table, std::string> tab = parse_ml_table(iter, last);
+                if(!tab){return err(tab.unwrap_err());}
+                const result<boost::blank, std::string> inserted(
+                    insert_nested_key(data, tab.unwrap(),
+                        tabkey.unwrap().begin(), tabkey.unwrap().end()));
+                if(!inserted) {return err(inserted.unwrap_err());}
+                continue;
+            }
+        }
+        return err("toml::detail::parse_toml_file: " + current_line(bfr, last));
+    }
+    return ok(data);
+}
+
 } // detail
 
 // inline toml::table parse(const std::string& fname)
