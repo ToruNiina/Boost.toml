@@ -13,6 +13,7 @@ __NOTE__: This library is not a part of Boost C++ Library.
 ## Table of Contents
 
 - [example code](#example-code)
+- [parsing toml file](#parsing-toml-file)
 - [getting toml values](#getting-toml-values)
     - [basic usage of `toml::get`](#basic-usage-of-tomlget)
     - [getting `toml::array`](#getting-tomlarray)
@@ -116,6 +117,27 @@ int main()
 
     return 0;
 }
+```
+
+## parsing toml file
+
+Since this library is header-only, including `toml/toml.hpp` is the only thing
+required.
+
+`toml::parse` function parses toml file. It has two overloads. One receives
+`std::string` that represents the name of the file that you want to read. This
+throws `std::runtime_error` if an error appeared while opening the file.
+Another one recieves `std::istream&`.
+
+Both returns `toml::table` that includes all the data in a file.
+If an error appeared while parsing the file, it throws `std::runtime_error`.
+
+```cpp
+const toml::table data = parse("example.toml");
+// or
+std::ifstream ifs("example.toml");
+if(!ifs.good){return 1;}
+const toml::table data = parse(ifs);
 ```
 
 ## getting toml values
