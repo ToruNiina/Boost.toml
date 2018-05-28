@@ -1096,7 +1096,7 @@ parse_key(InputIterator& iter, const InputIterator last)
             {
                 return err("toml::detail::parse_key: "
                     "dotted key contains invalid key -> " +
-                    current_line(i, last));
+                    current_line(i, e));
             }
             if(i != e)
             {
