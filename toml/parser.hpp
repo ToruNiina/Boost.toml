@@ -51,7 +51,8 @@ std::string format_dotted_keys(InputIterator first, const InputIterator last)
 template<typename InputIterator>
 result<boost::blank, std::string>
 insert_nested_key(table& root, const toml::value& v,
-                  InputIterator iter, const InputIterator last)
+                  InputIterator iter, const InputIterator last,
+                  const bool is_array_of_table = false)
 {
     BOOST_STATIC_ASSERT(boost::is_same<
             typename boost::iterator_value<InputIterator>::type, key>::value);
@@ -65,6 +66,34 @@ insert_nested_key(table& root, const toml::value& v,
         InputIterator next(iter); ++next;
         if(next == last) // k is the last key
         {
+            if(is_array_of_table)
+            {
+                if(tab->count(k) == 1)
+                {
+                    if(!(tab->at(k).is(value::array_tag)))
+                    {
+                        return err(std::string("toml::detail::insert_nested_key"
+                            ": not an array of table"));
+                    }
+                    array& a = tab->at(k).template get<array>();
+                    if(!(a.front().is(value::table_tag)))
+                    {
+                        std::ostringstream oss;
+                        oss << "toml::detail::insert_nested_key: invalid key "
+                            << format_dotted_keys(first, last) << ": value is "
+                            << "not a table but an array of tables";
+                        return err(oss.str());
+                    }
+                    a.push_back(v);
+                    return ok(boost::blank());
+                }
+                else
+                {
+                    array aot(1, v);
+                    tab->insert(std::make_pair(k, value(aot)));
+                    return ok(boost::blank());
+                }
+            }
             if(tab->count(k) == 1)
             {
                 return err("toml::detail::insert_nested_key: value already "
