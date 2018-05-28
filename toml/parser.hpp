@@ -1446,36 +1446,41 @@ parse_toml_file(InputIterator& iter, const InputIterator last)
 
 } // detail
 
-// inline toml::table parse(const std::string& fname)
-// {
-//     std::ifstream ifs(fname.c_str());
-//     if(!ifs.good()){throw std::runtime_error("file open error -> " + fname);}
-//
-//     const std::ios::pos_type beg = ifs.tellg();
-//     ifs.seekg(0, ios::end);
-//     const std::ios::pos_type end = ifs.tellg();
-//     const std::size_t fsize = end - beg;
-//     ifs.seekg(beg);
-//
-//     std::vector<char> letters(fsize);
-//     ifs.read(letters.data(), fsize);
-//
-//     return detail::parse_toml_file(letters.begin(), letters.end());
-// }
-//
-// inline toml::table parse(const std::istream& is)
-// {
-//     const std::ios::pos_type beg = ifs.tellg();
-//     ifs.seekg(0, ios::end);
-//     const std::ios::pos_type end = ifs.tellg();
-//     const std::size_t fsize = end - beg;
-//     ifs.seekg(beg);
-//
-//     std::vector<char> letters(fsize);
-//     ifs.read(letters.data(), fsize);
-//
-//     return detail::parse_toml_file(letters.begin(), letters.end());
-// }
+inline table parse(std::istream& is)
+{
+    const std::ios::pos_type beg = is.tellg();
+    is.seekg(0, std::ios::end);
+    const std::ios::pos_type end = is.tellg();
+    const std::size_t fsize = end - beg;
+    is.seekg(beg);
+
+    std::vector<char> letters(fsize);
+    is.read(letters.data(), fsize);
+
+    std::vector<char>::const_iterator first = letters.begin(),
+                                       last = letters.end();
+    const detail::result<table, std::string> res(
+            detail::parse_toml_file(first, last));
+    if(!res)
+    {
+        throw std::runtime_error(res.unwrap_err());
+    }
+    else
+    {
+        return res.unwrap();
+    }
+}
+
+inline table parse(const std::string& fname)
+{
+    std::ifstream ifs(fname.c_str());
+    if(!ifs.good())
+    {
+        throw std::runtime_error("toml::parse: file open error -> " + fname);
+    }
+
+    return parse(ifs);
+}
 
 } // toml
 #endif// TOML_PARSER_HPP
