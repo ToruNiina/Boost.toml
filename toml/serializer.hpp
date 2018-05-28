@@ -20,6 +20,10 @@ BOOST_CONSTEXPR inline std::size_t forceinline()
 struct serializer : boost::static_visitor<std::string>
 {
     serializer(const std::size_t w): width_(w){}
+    serializer(const std::size_t w, const std::vector<toml::key>& ks,
+               const bool is_aot)
+        : width_(w), is_array_of_table_(is_aot), keys_(ks)
+    {}
     ~serializer(){}
 
     std::string operator()(const boost::blank) const
@@ -99,29 +103,90 @@ struct serializer : boost::static_visitor<std::string>
     }
     std::string operator()(const array& v) const
     {
-        std::string serial;
-        serial += '[';
+        {
+            const std::string inl = this->make_inline_array(v);
+            if(inl.size() < this->width_ &&
+               std::find(inl.begin(), inl.end(), '\n') == inl.end())
+            {return inl;}
+        }
+        std::string token;
+        token += "[\n";
         for(typename array::const_iterator i(v.begin()), e(v.end()); i!=e; ++i)
         {
-            serial += apply_visitor(*this, *i);
-            serial += ", ";
+            token += apply_visitor(*this, *i);
+            token += ",\n";
         }
-        serial += ']';
-        return serial;
+        token += "]\n";
+        return token;
     }
     std::string operator()(const table& v) const
     {
-        std::string serial;
-        serial += '{';
-        for(typename table::const_iterator i(v.begin()), e(v.end()); i!=e; ++i)
-        {
-            serial += i->first;
-            serial += " = ";
-            serial += apply_visitor(*this, i->second);
-            serial += ", ";
+        if(!is_array_of_table_){
+            const std::string inl = this->make_inline_table(v);
+            if(inl.size() < this->width_ &&
+               std::find(inl.begin(), inl.end(), '\n') == inl.end())
+            {
+                std::string token;
+                if(!keys_.empty() && !is_array_of_table_)
+                {
+                    token += serialize_dotted_key(keys_);
+                    token += " = ";
+                }
+                token += inl;
+                if(!is_array_of_table_)
+                {
+                    token += '\n';
+                }
+                return token;
+            }
         }
-        serial += '}';
-        return serial;
+
+        std::string token;
+        if(!keys_.empty())
+        {
+            if(is_array_of_table_) {token += '[';}
+            token += '[';
+            token += serialize_dotted_key(keys_);
+            if(is_array_of_table_) {token += ']';}
+            token += "]\n";
+        }
+
+        // print non-table stuff first
+        for(table::const_iterator i(v.begin()), e(v.end()); i!=e; ++i)
+        {
+            if(i->second.is(value::table_tag)){continue;}
+            if(i->second.is(value::array_tag) &&
+               i->second.get<array>().front().is(value::table_tag)) {continue;}
+
+            token += serialize_key(i->first);
+            token += " = ";
+            token += apply_visitor(*this, i->second);
+            token += "\n";
+        }
+
+        for(table::const_iterator i(v.begin()), e(v.end()); i!=e; ++i)
+        {
+            if(i->second.is(value::table_tag))
+            {
+                std::vector<toml::key> ks(keys_);
+                ks.push_back(i->first);
+                token += apply_visitor(serializer(width_, ks, false), i->second);
+            }
+            if(i->second.is(value::array_tag) &&
+               i->second.get<array>().front().is(value::table_tag))
+            {
+                std::vector<toml::key> ks(keys_);
+                ks.push_back(i->first);
+
+                const array& a = i->second.get<array>();
+                for(array::const_iterator
+                        ai(a.begin()), ae(a.end()); ai!=ae; ++ai)
+                {
+                    token += apply_visitor(serializer(width_, ks, true), *ai);
+                }
+            }
+        }
+        return token;
     }
 
   private:
@@ -171,11 +236,67 @@ struct serializer : boost::static_visitor<std::string>
         return retval;
     }
 
+    std::string serialize_key(const toml::key& key) const
+    {
+        toml::key::const_iterator i(key.begin());
+        detail::lex_unquoted_key::invoke(i, key.end());
+        if(i == key.end())
+        {
+            return key;
+        }
+        std::string token("\"");
+        token += escape_basic_string(key);
+        token += "\"";
+        return token;
+    }
 
+    std::string serialize_dotted_key(const std::vector<toml::key>& keys) const
+    {
+        std::string token;
+        for(std::vector<toml::key>::const_iterator
+                i(keys.begin()), e(keys.end()); i!=e; ++i)
+        {
+            token += this->serialize_key(*i);
+            token += '.';
+        }
+        token.erase(token.size() - 1, 1); // remove trailing `.`
+        return token;
+    }
+
+    std::string make_inline_array(const array& v) const
+    {
+        std::string token;
+        token += '[';
+        for(typename array::const_iterator i(v.begin()), e(v.end()); i!=e; ++i)
+        {
+            token += apply_visitor(*this, *i);
+            token += ", ";
+        }
+        token += ']';
+        return token;
+    }
+
+    std::string make_inline_table(const table& v) const
+    {
+        std::string token;
+        token += '{';
+        for(typename table::const_iterator i(v.begin()), e(v.end()); i!=e; ++i)
+        {
+            token += i->first;
+            token += " = ";
+            token += apply_visitor(*this, i->second);
+            token += ", ";
+        }
+        token += '}';
+        return token;
+    }
 
   private:
+
     std::size_t width_;   // TODO use it to serialize
-    std::string valname_; // to output table...
+    // to serialize table...
+    bool      is_array_of_table_;
+    std::vector<toml::key> keys_; // to format nested table
 };
 
 inline std::string serialize(const value& v, std::size_t w = 80)
