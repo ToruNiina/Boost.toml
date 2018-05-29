@@ -8,7 +8,6 @@
 #include <toml/lexer.hpp>
 #include <toml/value.hpp>
 #include <boost/config.hpp>
-#include <boost/lexical_cast.hpp>
 #include <boost/static_assert.hpp>
 #include <boost/core/addressof.hpp>
 #include <boost/optional/optional_io.hpp>
@@ -46,6 +45,15 @@ std::string format_dotted_keys(InputIterator first, const InputIterator last)
         retval += *first;
     }
     return retval;
+}
+
+template<typename T>
+T from_string(const std::string& str, const T& opt)
+{
+    T v(opt);
+    std::istringstream iss(str);
+    iss >> v;
+    return v;
 }
 
 template<typename InputIterator>
@@ -275,7 +283,8 @@ parse_floating(InputIterator& iter, const InputIterator last)
         const std::string::iterator token_last =
             std::remove(token->begin(), token->end(), '_');
         token->erase(token_last, token->end());
-        return ok(boost::lexical_cast<floating>(*token));
+
+        return ok(from_string<toml::floating>(*token, 0.0));
     }
     iter = first;
     return err("toml::detail::parse_floating: "
@@ -644,8 +653,9 @@ parse_local_date(InputIterator& iter, const InputIterator last)
         return err("toml::detail::parse_local_date: did not match day -> "
                 + current_line(iter, last));
     }
-    return ok(date(boost::lexical_cast<int>(*y), boost::lexical_cast<int>(*m),
-                   boost::lexical_cast<int>(*d)));
+
+    return ok(date(from_string<int>(*y, 0), from_string<int>(*m, 0),
+                   from_string<int>(*d, 0)));
 }
 
 template<typename InputIterator>
@@ -685,9 +695,9 @@ parse_local_time(InputIterator& iter, const InputIterator last)
                   current_line(iter, last));
     }
 
-    time tm(hours(boost::lexical_cast<int>(*h)) +
-            minutes(boost::lexical_cast<int>(*m)) +
-            seconds(boost::lexical_cast<int>(*s)));
+    time tm(hours  (from_string<int>(*h, 0)) +
+            minutes(from_string<int>(*m, 0)) +
+            seconds(from_string<int>(*s, 0)));
 
     if(iter != last && *iter == '.')
     {
@@ -705,17 +715,15 @@ parse_local_time(InputIterator& iter, const InputIterator last)
             case 1: *subseconds += '0'; BOOST_FALLTHROUGH;
             case 0: break;
         }
-        tm += milliseconds(boost::lexical_cast<int>(subseconds->substr(0, 3)));
+        tm += milliseconds(from_string<int>(subseconds->substr(0, 3), 0));
         if(subseconds->size() >= 6)
         {
-            tm += microseconds(
-                    boost::lexical_cast<int>(subseconds->substr(3, 3)));
+            tm += microseconds(from_string<int>(subseconds->substr(3, 3), 0));
         }
 #ifdef BOOST_DATE_TIME_HAS_NANOSECONDS
         if(subseconds->size() >= 9)
         {
-            tm += nanoseconds(
-                    boost::lexical_cast<int>(subseconds->substr(6, 3)));
+            tm += nanoseconds(from_string<int>(subseconds->substr(6, 3), 0));
         }
 #endif
     }
@@ -810,13 +818,13 @@ parse_offset_datetime(InputIterator& iter, const InputIterator last)
 
     if(sign == '+')
     {
-        offset += hours  (boost::lexical_cast<int>(*offset_h));
-        offset += minutes(boost::lexical_cast<int>(*offset_m));
+        offset += hours  (from_string<int>(*offset_h, 0));
+        offset += minutes(from_string<int>(*offset_m, 0));
     }
     else
     {
-        offset -= hours  (boost::lexical_cast<int>(*offset_h));
-        offset -= minutes(boost::lexical_cast<int>(*offset_m));
+        offset -= hours  (from_string<int>(*offset_h, 0));
+        offset -= minutes(from_string<int>(*offset_m, 0));
     }
 
     boost::local_time::time_zone_names tzn(
