@@ -5,7 +5,6 @@
 #ifndef TOML_SERIALIZER_HPP
 #define TOML_SERIALIZER_HPP
 #include <toml/value.hpp>
-#include <boost/lexical_cast.hpp>
 #include <sstream>
 #include <iomanip>
 
@@ -39,7 +38,8 @@ struct serializer : boost::static_visitor<std::string>
     }
     std::string operator()(const integer i) const
     {
-        return boost::lexical_cast<std::string>(i);
+        std::ostringstream oss; oss << i;
+        return oss.str();
     }
     std::string operator()(const floating f) const
     {
