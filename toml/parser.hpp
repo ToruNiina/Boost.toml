@@ -926,7 +926,7 @@ parse_key_value_pair(InputIterator& iter, const InputIterator last)
     if(!kvsp)
     {
         return err("toml::detail::parse_key_value_pair: "
-            "key-value separator `=` missing" + current_line(first, last));
+            "key-value separator `=` missing -> " + current_line(first, last));
     }
 
     const result<value, std::string> val_r = parse_value(iter, last);
