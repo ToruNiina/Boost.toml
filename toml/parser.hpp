@@ -1342,7 +1342,8 @@ parse_ml_table(InputIterator& iter, const InputIterator last)
     }
 
     typedef repeat<sequence<maybe<lex_ws>,
-            sequence<maybe<lex_comment>, lex_newline> >, unlimited> skip_line;
+            sequence<maybe<lex_comment>, lex_newline> >, unlimited
+            > skip_line;
     skip_line::invoke(iter, last);
 
     table tab;
@@ -1385,9 +1386,15 @@ parse_ml_table(InputIterator& iter, const InputIterator last)
         else
         {
             return err("toml::detail::parse_ml_table: invalid line appeared -> "
-                + current_line(bfr, last));
+                + kv.unwrap_err());
         }
         skip_line::invoke(iter, last);
+        // comment lines are skipped by the above function call.
+        // However, if the file ends with comment without newline,
+        // it might cause parsing error because skip_line matches
+        // `comment + newline`, not `comment` itself. to skip the
+        // last comment, call this one more time.
+        lex_comment::invoke(iter, last);
     }
     return ok(tab);
 }
