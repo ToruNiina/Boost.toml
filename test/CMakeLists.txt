@@ -15,6 +15,7 @@ set(TEST_NAMES
     parse_table_key_test
     get_test
     result_type_test
+    parse_file_test
     )
 
 foreach(TEST_NAME ${TEST_NAMES})
