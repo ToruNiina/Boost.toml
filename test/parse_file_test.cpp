@@ -206,7 +206,7 @@ BOOST_AUTO_TEST_CASE(test_hard_example_toml)
 
     BOOST_CHECK(the.count("hard") == 1);
     BOOST_CHECK(the.at("hard").is(toml::value::table_tag));
-    const toml::table& hard = toml::get<toml::table>(data.at("hard"));
+    const toml::table& hard = toml::get<toml::table>(the.at("hard"));
 
     BOOST_CHECK(hard.count("test_array") == 1);
     BOOST_CHECK(hard.at("test_array").is(toml::value::array_tag));
@@ -234,11 +234,9 @@ BOOST_AUTO_TEST_CASE(test_hard_example_toml)
     BOOST_CHECK(toml::get<std::string>(hard.at("harder_test_string")) ==
                 " And when \"'s are in the string, along with # \"");
 
-
-
-    BOOST_CHECK(the.count("bit#") == 1);
-    BOOST_CHECK(the.at("bit#").is(toml::value::table_tag));
-    const toml::table& bit = toml::get<toml::table>(data.at("bit#"));
+    BOOST_CHECK(hard.count("bit#") == 1);
+    BOOST_CHECK(hard.at("bit#").is(toml::value::table_tag));
+    const toml::table& bit = toml::get<toml::table>(hard.at("bit#"));
 
     BOOST_CHECK(bit.count("what?") == 1);
     BOOST_CHECK(bit.at("what?").is(toml::value::string_tag));
@@ -267,7 +265,7 @@ BOOST_AUTO_TEST_CASE(test_hard_example_unicode_toml)
 
     BOOST_CHECK(the.count("hard") == 1);
     BOOST_CHECK(the.at("hard").is(toml::value::table_tag));
-    const toml::table& hard = toml::get<toml::table>(data.at("hard"));
+    const toml::table& hard = toml::get<toml::table>(the.at("hard"));
 
     BOOST_CHECK(hard.count("test_array") == 1);
     BOOST_CHECK(hard.at("test_array").is(toml::value::array_tag));
@@ -297,9 +295,9 @@ BOOST_AUTO_TEST_CASE(test_hard_example_unicode_toml)
 
 
 
-    BOOST_CHECK(the.count("βïƭ#") == 1);
-    BOOST_CHECK(the.at("βïƭ#").is(toml::value::table_tag));
-    const toml::table& bit = toml::get<toml::table>(data.at("βïƭ#"));
+    BOOST_CHECK(hard.count("βïƭ#") == 1);
+    BOOST_CHECK(hard.at("βïƭ#").is(toml::value::table_tag));
+    const toml::table& bit = toml::get<toml::table>(hard.at("βïƭ#"));
 
     BOOST_CHECK(bit.count("ωλáƭ?") == 1);
     BOOST_CHECK(bit.at("ωλáƭ?").is(toml::value::string_tag));
