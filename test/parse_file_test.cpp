@@ -1,4 +1,4 @@
-#define BOOST_TEST_MODULE "lex_datetime_test"
+#define BOOST_TEST_MODULE "parse_file_test"
 #include <toml/toml.hpp>
 #include <boost/test/included/unit_test.hpp>
 #include <iostream>
