@@ -1,12 +1,17 @@
 Boost.toml
 ====
 
+[![Build Status](https://travis-ci.com/ToruNiina/Boost.toml.svg?token=3rmRuAkSVRafwq2Rbd9b&branch=master)](https://travis-ci.com/ToruNiina/Boost.toml)
+
 Boost.toml is a header-only toml parser depending on Boost.
 
-tested with `-std=c++(98|03|11|14|17)`. Some functionalities
+tested with `-std=c++(98|11|14|17)` on Linux/macOS. Some functionalities
 (e.g. construction from `std::initilalizer_list`(after c++11), getting toml
 String as a `std::string_view` (after c++17)) are disabled when older standard
 version is given.
+
+Boost.toml depends on relatively later versions of the Boost C++ Library
+(tested with Boost 1.67.0 on Travis CI).
 
 __NOTE__: This library is not a part of Boost C++ Library.
 
@@ -24,6 +29,9 @@ __NOTE__: This library is not a part of Boost C++ Library.
 - [confirming value type](#confirming-value-type)
 - [visiting value that has unknown type](#visiting-value-that-has-unknown-type)
 - [formatting toml values](#formatting-toml-values)
+    - [constructing toml values](#constructing-toml-values)
+    - [printing toml values](#printing-toml-values)
+    - [formatting toml data](#formatting-toml-data)
 - [datetime operation](#datetime-operation)
 - [underlying types](#underlying-types)
     - [`toml::string` and `basic`, `literal` flags](#tomlstring-and-basic-literal-flags)
@@ -399,7 +407,131 @@ it uses them internally.
 
 ## formatting toml values
 
-TODO
+Boost.toml also supports output of toml values.
+
+### constructing toml values
+
+`toml::value` is constructible from toml-convertible types like `std::int64_t`,
+`double`, `float`, `std::string`, `const char*`, and many others.
+
+```cpp
+toml::value v1(42u);
+toml::value v2(3.1416);
+toml::value v3("string!");
+
+// construction of toml::datetime from date and time is also supported.
+toml::date  d(2018, 4, 1);
+toml::time  t(toml::hours(1), toml::minutes(30));
+toml::value v3(d, t);
+```
+
+Iterators are also supported.
+
+```cpp
+std::vector<toml::integer> is{1,2,3,4,5};
+toml::value v1(is.begin(), is.end());
+
+std::map<std::string, double> ds{{"pi", 3.1416}, {"e", 2.7183}};
+toml::value v2(ds.begin(), ds.end());
+```
+
+And you can construct `toml::value` from `std::initializer_list` when you use
+C++11 compatible compiler.
+
+```cpp
+toml::value v4{1,2,3,4,5}; // become an array
+toml::value v5{{"i", 42}, {"pi", 3.14}, {"key", "value"}}; // become a table
+```
+
+### printing toml values
+
+Boost.toml has `toml::format` function that converts a `toml::value` to
+`std::string`.
+
+```cpp
+std::cout << toml::format(toml::value(42));
+// 42
+std::cout << toml::format(toml::value("string with\nnewline"));
+// """
+// string with
+// newline"""
+std::cout << toml::format(toml::value(toml::date(1979, 5, 27), toml::hours(7) + toml::minutes(32)));
+// 1979-05-27T07:32:00
+std::cout << toml::format(toml::value{1, 2, 3});
+// [1,2,3]
+```
+
+`toml::format` sometimes adds newlines.
+
+```cpp
+toml::value str("too long string would be splitted to multiple lines, "
+                "and the threshould can be passed to toml::format function. "
+                "By default, the threshold is 80.");
+std::cout << str;
+// """
+// too long string would be splitted to multiple lines, and the threshould can be \
+// passed to toml::format function. By default, the threshold is 80.\
+// """
+toml::value ary{
+    "If an array has many elements so the result of toml::format become longer",
+    "than a threshold toml::format will print them in multi-line array."
+    };
+std::cout << ary;
+// [
+//  "If an array has many elements so the result of toml::format become longer",
+//  "than a threshold toml::format will print them in multi-line array.",
+// ]
+```
+
+`toml::format` automatically makes an element of array of tables inline when
+the length of line will be less than a threshold.
+
+```cpp
+toml::value aot{
+    toml::table{{"key1", 1}, {"key2", 3.14}},
+    toml::table{{"key1", 2}, {"key2", 6.28}},
+    toml::table{{"key1", 3}, {"key2", 9.42}}
+};
+std::cout << aot;
+// [
+//  {key1 = "value1-1", key2 = "value2-1"},
+//  {key1 = "value1-2", key2 = "value2-2"},
+//  {key1 = "value1-3", key2 = "value2-3"},
+// ]
+```
+
+You can change the threshold by passing a value explicitly to `toml::format`.
+
+```cpp
+std::cout << toml::format(val, 100);
+```
+
+By default, the threshold is set as 80.
+
+
+### formatting toml data
+
+If you pass a `toml::table` to `toml::format`, it prints a TOML file considering
+the `toml::table` as a root object.
+
+```cpp
+toml::table tab;
+tab["a"]   = toml::integer(42);
+tab["pi"]  = toml::floating(3.14);
+tab["key"] = toml::string("value");
+tab["tab"] = toml::table{{"b", 54}, {"e", 2.718}};
+
+std::cout << tab << std::endl;
+// a = 42
+// pi = 3.140000
+// key = "value"
+// [tab]
+// b = 54
+// e = 2.718000
+```
+
+There is a simplest example in `sample/` directory that reads toml file and
+outputs the content into `stdout`.
 
 ## datetime operation
 
