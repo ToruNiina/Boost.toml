@@ -6,6 +6,7 @@
 #define TOML_SERIALIZER_HPP
 #include <toml/value.hpp>
 #include <sstream>
+#include <locale>
 #include <iomanip>
 
 namespace toml
@@ -47,7 +48,7 @@ struct serializer : boost::static_visitor<std::string>
         return oss.str();
     }
     std::string operator()(const string& s) const
-    { // {{{
+    {
         if(s.kind == string::basic)
         {
             if(std::find(s.str.begin(), s.str.end(), '\n') != s.str.end())
@@ -102,30 +103,42 @@ struct serializer : boost::static_visitor<std::string>
                 return quote + s.str + quote;
             }
         }
-    } // }}}
+    }
 
     // TODO format datetime
     std::string operator()(const date& v) const
     {
         std::ostringstream oss;
+        boost::gregorian::date_facet*
+            facet(new boost::gregorian::date_facet("%Y-%m-%d"));
+        oss.imbue(std::locale(oss.getloc(), facet));
         oss << v;
         return oss.str();
     }
     std::string operator()(const time& v) const
     {
         std::ostringstream oss;
+        boost::gregorian::date_facet*
+            facet(new boost::gregorian::date_facet("%F *"));
+        oss.imbue(std::locale(oss.getloc(), facet));
         oss << v;
         return oss.str();
     }
     std::string operator()(const local_datetime& v) const
     {
         std::ostringstream oss;
+        boost::posix_time::time_facet*
+            facet(new boost::posix_time::time_facet("%Y-%m-%dT%H:%M:%S%F"));
+        oss.imbue(std::locale(oss.getloc(), facet));
         oss << v;
         return oss.str();
     }
     std::string operator()(const offset_datetime& v) const
     {
         std::ostringstream oss;
+        boost::local_time::local_time_facet*
+            facet(new boost::local_time::local_time_facet("%Y-%m-%dT%H:%M:%S%F%Q"));
+        oss.imbue(std::locale(oss.getloc(), facet));
         oss << v;
         return oss.str();
     }
