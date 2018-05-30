@@ -6,7 +6,7 @@ matrix:
   - os: linux
     language: cpp
     compiler: gcc
-    env: COMPILER="g++-7" CXX_STANDARD=98 MAKEFLAGS="-j 4"
+    env: COMPILER="g++-7" CXX_STANDARD=98
     addons:
       apt:
         sources:
@@ -16,7 +16,7 @@ matrix:
   - os: linux
     language: cpp
     compiler: gcc
-    env: COMPILER="g++-7" CXX_STANDARD=11 MAKEFLAGS="-j 4"
+    env: COMPILER="g++-7" CXX_STANDARD=11
     addons:
       apt:
         sources:
@@ -26,7 +26,7 @@ matrix:
   - os: linux
     language: cpp
     compiler: gcc
-    env: COMPILER="g++-7" CXX_STANDARD=14 MAKEFLAGS="-j 4"
+    env: COMPILER="g++-7" CXX_STANDARD=14
     addons:
       apt:
         sources:
@@ -36,7 +36,7 @@ matrix:
   - os: linux
     language: cpp
     compiler: gcc
-    env: COMPILER="g++-7" CXX_STANDARD=17 MAKEFLAGS="-j 4"
+    env: COMPILER="g++-7" CXX_STANDARD=17
     addons:
       apt:
         sources:
@@ -46,7 +46,7 @@ matrix:
   - os: linux
     language: cpp
     compiler: clang
-    env: COMPILER="clang++-5.0" CXX_STANDARD=98 MAKEFLAGS="-j 4"
+    env: COMPILER="clang++-5.0" CXX_STANDARD=98
     addons:
       apt:
         sources:
@@ -57,7 +57,7 @@ matrix:
   - os: linux
     language: cpp
     compiler: clang
-    env: COMPILER="clang++-5.0" CXX_STANDARD=11 MAKEFLAGS="-j 4"
+    env: COMPILER="clang++-5.0" CXX_STANDARD=11
     addons:
       apt:
         sources:
@@ -68,7 +68,7 @@ matrix:
   - os: linux
     language: cpp
     compiler: clang
-    env: COMPILER="clang++-5.0" CXX_STANDARD=14 MAKEFLAGS="-j 4"
+    env: COMPILER="clang++-5.0" CXX_STANDARD=14
     addons:
       apt:
         sources:
@@ -79,7 +79,7 @@ matrix:
   - os: linux
     language: cpp
     compiler: clang
-    env: COMPILER="clang++-5.0" CXX_STANDARD=17 MAKEFLAGS="-j 4"
+    env: COMPILER="clang++-5.0" CXX_STANDARD=17
     addons:
       apt:
         sources:
@@ -90,19 +90,19 @@ matrix:
   - os: osx
     language: cpp
     compiler: clang
-    env: COMPILER="clang++" CXX_STANDARD=98 MAKEFLAGS="-j 4"
+    env: COMPILER="clang++" CXX_STANDARD=98
   - os: osx
     language: cpp
     compiler: clang
-    env: COMPILER="clang++" CXX_STANDARD=11 MAKEFLAGS="-j 4"
+    env: COMPILER="clang++" CXX_STANDARD=11
   - os: osx
     language: cpp
     compiler: clang
-    env: COMPILER="clang++" CXX_STANDARD=14 MAKEFLAGS="-j 4"
+    env: COMPILER="clang++" CXX_STANDARD=14
   - os: osx
     language: cpp
     compiler: clang
-    env: COMPILER="clang++" CXX_STANDARD=17 MAKEFLAGS="-j 4"
+    env: COMPILER="clang++" CXX_STANDARD=17
 
 script:
 - |
