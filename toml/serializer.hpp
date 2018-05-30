@@ -18,7 +18,6 @@ inline bool is_array_of_table(const value& v)
     return v.is(value::array_tag) && (!v.get<array>().empty()) &&
            v.get<array>().front().is(value::table_tag);
 }
-}// detail
 
 struct serializer : boost::static_visitor<std::string>
 {
@@ -137,7 +136,8 @@ struct serializer : boost::static_visitor<std::string>
     {
         std::ostringstream oss;
         boost::local_time::local_time_facet*
-            facet(new boost::local_time::local_time_facet("%Y-%m-%dT%H:%M:%S%F%Q"));
+            facet(new boost::local_time::local_time_facet(
+                        "%Y-%m-%dT%H:%M:%S%F%Q"));
         oss.imbue(std::locale(oss.getloc(), facet));
         oss << v;
         return oss.str();
@@ -269,7 +269,7 @@ struct serializer : boost::static_visitor<std::string>
     std::string serialize_key(const toml::key& key) const
     {
         toml::key::const_iterator i(key.begin());
-        detail::lex_unquoted_key::invoke(i, key.end());
+        lex_unquoted_key::invoke(i, key.end());
         if(i == key.end())
         {
             return key;
@@ -329,8 +329,8 @@ struct serializer : boost::static_visitor<std::string>
         // 1. print non-table stuff first
         for(table::const_iterator i(v.begin()), e(v.end()); i!=e; ++i)
         {
-            if(i->second.is(value::table_tag) || 
-               detail::is_array_of_table(i->second)) {continue;}
+            if(i->second.is(value::table_tag) || is_array_of_table(i->second))
+            {continue;}
 
             token += serialize_key(i->first);
             token += " = ";
@@ -341,7 +341,7 @@ struct serializer : boost::static_visitor<std::string>
         // 2. array of tables
         for(table::const_iterator i(v.begin()), e(v.end()); i!=e; ++i)
         {
-            if(!detail::is_array_of_table(i->second)){continue;}
+            if(!is_array_of_table(i->second)){continue;}
 
             std::vector<toml::key> ks(keys_);
             ks.push_back(i->first);
@@ -360,15 +360,17 @@ struct serializer : boost::static_visitor<std::string>
         }
         return token;
     }
+
   private:
 
     std::size_t width_;
     std::vector<toml::key> keys_;
 };
+} // detail
 
-inline std::string serialize(const value& v, std::size_t w = 80)
+inline std::string serialize(const value& v, std::size_t w = 50)
 {
-    return apply_visitor(serializer(w), v);
+    return v.apply_visitor(detail::serializer(w));
 }
 
 template<typename charT, typename traits>
