@@ -10,7 +10,6 @@ matrix:
     addons:
       apt:
         packages:
-        - build-essential
         - g++-5
   - os: linux
     language: cpp
@@ -19,7 +18,6 @@ matrix:
     addons:
       apt:
         packages:
-        - build-essential
         - g++-5
   - os: linux
     language: cpp
@@ -28,7 +26,6 @@ matrix:
     addons:
       apt:
         packages:
-        - build-essential
         - g++-5
   - os: linux
     language: cpp
@@ -37,7 +34,6 @@ matrix:
     addons:
       apt:
         packages:
-        - build-essential
         - g++-5
   - os: linux
     language: cpp
@@ -49,7 +45,6 @@ matrix:
         - ubuntu-toolchain-r-test
         - llvm-toolchain-trusty-5.0
         packages:
-        - build-essential
         - clang-5.0
   - os: linux
     language: cpp
@@ -61,7 +56,6 @@ matrix:
         - ubuntu-toolchain-r-test
         - llvm-toolchain-trusty-5.0
         packages:
-        - build-essential
         - clang-5.0
   - os: linux
     language: cpp
@@ -73,7 +67,6 @@ matrix:
         - ubuntu-toolchain-r-test
         - llvm-toolchain-trusty-5.0
         packages:
-        - build-essential
         - clang-5.0
   - os: linux
     language: cpp
@@ -85,7 +78,6 @@ matrix:
         - ubuntu-toolchain-r-test
         - llvm-toolchain-trusty-5.0
         packages:
-        - build-essential
         - clang-5.0
   - os: osx
     language: cpp
