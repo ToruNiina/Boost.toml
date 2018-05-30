@@ -9,6 +9,8 @@ matrix:
     env: COMPILER="g++-5" CXX_STANDAD=98
     addons:
       apt:
+        sources:
+        - ubuntu-toolchain-r-test
         packages:
         - g++-5
   - os: linux
@@ -17,6 +19,8 @@ matrix:
     env: COMPILER="g++-5" CXX_STANDAD=11
     addons:
       apt:
+        sources:
+        - ubuntu-toolchain-r-test
         packages:
         - g++-5
   - os: linux
@@ -25,6 +29,8 @@ matrix:
     env: COMPILER="g++-5" CXX_STANDAD=14
     addons:
       apt:
+        sources:
+        - ubuntu-toolchain-r-test
         packages:
         - g++-5
   - os: linux
@@ -33,6 +39,8 @@ matrix:
     env: COMPILER="g++-5" CXX_STANDAD=17
     addons:
       apt:
+        sources:
+        - ubuntu-toolchain-r-test
         packages:
         - g++-5
   - os: linux
@@ -101,7 +109,7 @@ script:
   if [[ "${TRAVIS_OS_NAME}" == "linux" ]]; then
     mkdir -p cmake
     travis_retry wget "https://cmake.org/files/v3.11/cmake-3.11.2-Linux-x86_64.tar.gz"
-    tar xvf -C cmake --strip-components=1
+    tar xvf cmake-3.11.2-Linux-x86_64.tar.gz -C cmake --strip-components=1
     export PATH=${DEPS_DIR}/cmake/bin:${PATH}
   else
     brew install cmake
@@ -111,7 +119,7 @@ script:
 - |
   mkdir -p boost
   travis_retry wget "https://dl.bintray.com/boostorg/release/1.67.0/source/boost_1_67_0.tar.gz"
-  tar xvf -C boost --strip-components=1
+  tar xvf boost_1_67_0.tar.gz -C boost --strip-components=1
 - ls boost/
 - mkdir build
 - cd build
