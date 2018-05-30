@@ -156,7 +156,9 @@ struct serializer : boost::static_visitor<std::string>
             for(array::const_iterator i(v.begin()), e(v.end()); i!=e; ++i)
             {
                 const std::string t = make_inline_table(i->get<table>());
-                if(t.size() > width_){width_exceeds = true; break;}
+                if(t.size() > width_ ||
+                   std::find(t.begin(), t.end(), '\n') != t.end())
+                {width_exceeds = true; break;}
                 token += t;
                 token += ",\n";
             }
@@ -198,6 +200,11 @@ struct serializer : boost::static_visitor<std::string>
 
     std::string operator()(const table& v) const
     {
+        if(this->width_ == std::numeric_limits<std::size_t>::max())
+        {
+            // for table inside of an element of array of table.
+            return make_inline_table(v);
+        }
         std::string token;
         if(!keys_.empty())
         {
