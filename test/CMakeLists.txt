@@ -16,6 +16,7 @@ set(TEST_NAMES
     get_test
     result_type_test
     parse_file_test
+    write_file_test
     )
 
 foreach(TEST_NAME ${TEST_NAMES})
