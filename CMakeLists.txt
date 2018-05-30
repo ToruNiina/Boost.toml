@@ -4,7 +4,7 @@ project(boost_toml)
 
 include_directories(${PROJECT_SOURCE_DIR})
 
-if(NOT EXISTS "${PROJECT_SOURCE_DIR}/test/toml")
+if(NOT EXISTS "${PROJECT_SOURCE_DIR}/test/toml/tests/example.toml")
     execute_process(COMMAND git submodule update --init --recursive
                     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
 endif()
