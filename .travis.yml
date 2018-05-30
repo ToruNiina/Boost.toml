@@ -6,7 +6,7 @@ matrix:
   - os: linux
     language: cpp
     compiler: gcc
-    env: COMPILER="g++-5" CXX_STANDAD=98
+    env: COMPILER="g++-5" CXX_STANDARD=98
     addons:
       apt:
         sources:
@@ -16,7 +16,7 @@ matrix:
   - os: linux
     language: cpp
     compiler: gcc
-    env: COMPILER="g++-5" CXX_STANDAD=11
+    env: COMPILER="g++-5" CXX_STANDARD=11
     addons:
       apt:
         sources:
@@ -26,7 +26,7 @@ matrix:
   - os: linux
     language: cpp
     compiler: gcc
-    env: COMPILER="g++-5" CXX_STANDAD=14
+    env: COMPILER="g++-5" CXX_STANDARD=14
     addons:
       apt:
         sources:
@@ -36,7 +36,7 @@ matrix:
   - os: linux
     language: cpp
     compiler: gcc
-    env: COMPILER="g++-5" CXX_STANDAD=17
+    env: COMPILER="g++-5" CXX_STANDARD=17
     addons:
       apt:
         sources:
@@ -90,27 +90,27 @@ matrix:
   - os: osx
     language: cpp
     compiler: clang
-    env: COMPILER="clang++" CXX_STANDAD=98
+    env: COMPILER="clang++" CXX_STANDARD=98
   - os: osx
     language: cpp
     compiler: clang
-    env: COMPILER="clang++" CXX_STANDAD=11
+    env: COMPILER="clang++" CXX_STANDARD=11
   - os: osx
     language: cpp
     compiler: clang
-    env: COMPILER="clang++" CXX_STANDAD=14
+    env: COMPILER="clang++" CXX_STANDARD=14
   - os: osx
     language: cpp
     compiler: clang
-    env: COMPILER="clang++" CXX_STANDAD=17
+    env: COMPILER="clang++" CXX_STANDARD=17
 
 script:
 - |
   if [[ "${TRAVIS_OS_NAME}" == "linux" ]]; then
     mkdir -p cmake
     travis_retry wget "https://cmake.org/files/v3.11/cmake-3.11.2-Linux-x86_64.tar.gz"
-    tar xvf cmake-3.11.2-Linux-x86_64.tar.gz -C cmake --strip-components=1
-    export PATH=${DEPS_DIR}/cmake/bin:${PATH}
+    tar xf cmake-3.11.2-Linux-x86_64.tar.gz -C cmake --strip-components=1
+    export PATH=${TRAVIS_BUILD_DIR}/cmake/bin:${PATH}
   else
     brew install cmake
     brew upgrade cmake
@@ -119,10 +119,10 @@ script:
 - |
   mkdir -p boost
   travis_retry wget "https://dl.bintray.com/boostorg/release/1.67.0/source/boost_1_67_0.tar.gz"
-  tar xvf boost_1_67_0.tar.gz -C boost --strip-components=1
+  tar xf boost_1_67_0.tar.gz -C boost --strip-components=1
 - ls boost/
 - mkdir build
 - cd build
-- cmake -DCMAKE_CXX_COMPILER=$COMPILER -DCMAKE_CXX_STANDARD=$CXX_STANDARD -DBOOST_ROOT=${DEPS_DIR}/boost/ ..
+- cmake -DCMAKE_CXX_COMPILER=$COMPILER -DCMAKE_CXX_STANDARD=$CXX_STANDARD -DBOOST_ROOT=$TRAVIS_BUILD_DIR/boost/ ..
 - make
 - ctest --output-on-failure
