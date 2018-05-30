@@ -5,6 +5,8 @@ Boost.toml
 
 Boost.toml is a header-only toml parser depending on Boost.
 
+It is compatible with TOML v0.4.0 (actually, it contains almost all the features in [d3d6f32](https://github.com/toml-lang/toml/tree/d3d6f32b73369a9bfd8411a143718f7a4a84ee2c)).
+
 tested with `-std=c++(98|11|14|17)` on Linux/macOS. Some functionalities
 (e.g. construction from `std::initilalizer_list`(after c++11), getting toml
 String as a `std::string_view` (after c++17)) are disabled when older standard
