@@ -53,7 +53,7 @@ struct serializer : boost::static_visitor<std::string>
             if(std::find(s.str.begin(), s.str.end(), '\n') != s.str.end())
             {
                 const std::string open("\"\"\"\n");
-                const std::string close("\"\"\"");
+                const std::string close("\\\n\"\"\"");
                 const std::string b = escape_ml_basic_string(s.str);
                 return open + b + close;
             }
@@ -86,7 +86,7 @@ struct serializer : boost::static_visitor<std::string>
                     oneline.erase(0, width_-1);
                 }
             }
-            return token + std::string("\"\"\"");
+            return token + std::string("\\\n\"\"\"");
         }
         else
         {
@@ -104,7 +104,6 @@ struct serializer : boost::static_visitor<std::string>
         }
     }
 
-    // TODO format datetime
     std::string operator()(const date& v) const
     {
         std::ostringstream oss;
@@ -144,11 +143,16 @@ struct serializer : boost::static_visitor<std::string>
     }
     std::string operator()(const array& v) const
     {
-        if(!v.empty() && v.front().is(value::table_tag) && !keys_.empty())
+        if(!v.empty() && v.front().is(value::table_tag)) // array of table
         {
+            std::string token;
+            if(!keys_.empty())
+            {
+                token += serialize_key(keys_.back());
+                token += " = ";
+            }
             bool width_exceeds = false;
-            std::string token(serialize_key(keys_.back()));
-            token += " = [\n";
+            token += "[\n";
             for(array::const_iterator i(v.begin()), e(v.end()); i!=e; ++i)
             {
                 const std::string t = make_inline_table(i->get<table>());
@@ -194,20 +198,6 @@ struct serializer : boost::static_visitor<std::string>
 
     std::string operator()(const table& v) const
     {
-        if(!keys_.empty())
-        {
-            const std::string inl = this->make_inline_table(v);
-            if(inl.size() < this->width_ &&
-               std::find(inl.begin(), inl.end(), '\n') == inl.end())
-            {
-                std::string token(serialize_key(keys_.back()));
-                token += " = ";
-                token += inl;
-                token += '\n';
-                return token;
-            }
-        }
-
         std::string token;
         if(!keys_.empty())
         {
@@ -283,6 +273,8 @@ struct serializer : boost::static_visitor<std::string>
     std::string serialize_dotted_key(const std::vector<toml::key>& keys) const
     {
         std::string token;
+        if(keys.empty()){return token;}
+
         for(std::vector<toml::key>::const_iterator
                 i(keys.begin()), e(keys.end()); i!=e; ++i)
         {
@@ -368,16 +360,21 @@ struct serializer : boost::static_visitor<std::string>
 };
 } // detail
 
-inline std::string serialize(const value& v, std::size_t w = 50)
+inline std::string format(const value& v, std::size_t w = 80)
 {
     return v.apply_visitor(detail::serializer(w));
+}
+
+inline std::string format(const table& t, std::size_t w = 80)
+{
+    return detail::serializer(w)(t);
 }
 
 template<typename charT, typename traits>
 std::basic_ostream<charT, traits>&
 operator<<(std::basic_ostream<charT, traits>& os, const value& v)
 {
-    os << serialize(v);
+    os << format(v);
     return os;
 }
 
