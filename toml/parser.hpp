@@ -280,6 +280,22 @@ parse_floating(InputIterator& iter, const InputIterator last)
     boost::optional<std::string> token = lex_float::invoke(iter, last);
     if(token)
     {
+        if(*token == "inf" || *token == "+inf")
+        {
+            return ok(std::numeric_limits<floating>::infinity());
+        }
+        else if(*token == "-inf")
+        {
+            return ok(-std::numeric_limits<floating>::infinity());
+        }
+        else if(*token == "nan" || *token == "+nan")
+        {
+            return ok(std::numeric_limits<floating>::quiet_NaN());
+        }
+        else if(*token == "-nan")
+        {
+            return ok(-std::numeric_limits<floating>::quiet_NaN());
+        }
         const std::string::iterator token_last =
             std::remove(token->begin(), token->end(), '_');
         token->erase(token_last, token->end());
