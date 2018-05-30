@@ -1,6 +1,7 @@
 #define BOOST_TEST_MODULE "parse_floating_test"
 #include <toml/parser.hpp>
 #include <boost/test/included/unit_test.hpp>
+#include <boost/math/special_functions/fpclassify.hpp>
 #include <iostream>
 #include <iomanip>
 #include "parse_aux.hpp"
@@ -94,22 +95,113 @@ BOOST_AUTO_TEST_CASE(test_fe_vaule)
 
 BOOST_AUTO_TEST_CASE(test_inf)
 {
-    TOML_PARSE_CHECK_EQUAL(parse_floating, "inf",  floating,
-            std::numeric_limits<toml::floating>::infinity());
-    TOML_PARSE_CHECK_EQUAL(parse_floating, "+inf", floating,
-            std::numeric_limits<toml::floating>::infinity());
-    TOML_PARSE_CHECK_EQUAL(parse_floating, "-inf", floating,
-            -std::numeric_limits<toml::floating>::infinity());
+    {
+        const std::string token("inf");
+        std::string::const_iterator iter(token.begin());
+        const result<floating, std::string> r =
+            parse_floating(iter, token.end());
+        BOOST_CHECK(r);
+        BOOST_CHECK(iter == token.end());
+        if(r)
+        {
+            BOOST_CHECK(boost::math::isinf(r.unwrap()));
+            BOOST_CHECK(r.unwrap() > 0.0);
+        }
+        else
+        {
+            std::cerr << r.unwrap_err() << std::endl;
+        }
+    }
+    {
+        const std::string token("+inf");
+        std::string::const_iterator iter(token.begin());
+        const result<floating, std::string> r =
+            parse_floating(iter, token.end());
+        BOOST_CHECK(r);
+        BOOST_CHECK(iter == token.end());
+        if(r)
+        {
+            BOOST_CHECK(boost::math::isinf(r.unwrap()));
+            BOOST_CHECK(r.unwrap() > 0.0);
+        }
+        else
+        {
+            std::cerr << r.unwrap_err() << std::endl;
+        }
+    }
+    {
+        const std::string token("-inf");
+        std::string::const_iterator iter(token.begin());
+        const result<floating, std::string> r =
+            parse_floating(iter, token.end());
+        BOOST_CHECK(r);
+        BOOST_CHECK(iter == token.end());
+        if(r)
+        {
+            BOOST_CHECK(boost::math::isinf(r.unwrap()));
+            BOOST_CHECK(r.unwrap() < 0.0);
+        }
+        else
+        {
+            std::cerr << r.unwrap_err() << std::endl;
+        }
+    }
 }
 
 BOOST_AUTO_TEST_CASE(test_inf_value)
 {
-    TOML_PARSE_CHECK_EQUAL(parse_value, "inf",  value,
-            value(std::numeric_limits<toml::floating>::infinity()));
-    TOML_PARSE_CHECK_EQUAL(parse_value, "+inf", value,
-            value(std::numeric_limits<toml::floating>::infinity()));
-    TOML_PARSE_CHECK_EQUAL(parse_value, "-inf", value,
-            value(-std::numeric_limits<toml::floating>::infinity()));
+    {
+        const std::string token("inf");
+        std::string::const_iterator iter(token.begin());
+        const result<value, std::string> r = parse_value(iter, token.end());
+        BOOST_CHECK(r);
+        BOOST_CHECK(iter == token.end());
+        if(r)
+        {
+            BOOST_CHECK(r.unwrap().is(value::float_tag));
+            BOOST_CHECK(boost::math::isinf(r.unwrap().get<floating>()));
+            BOOST_CHECK(r.unwrap().get<floating>() > 0.0);
+        }
+        else
+        {
+            std::cerr << r.unwrap_err() << std::endl;
+        }
+    }
+    {
+        const std::string token("+inf");
+        std::string::const_iterator iter(token.begin());
+        const result<value, std::string> r = parse_value(iter, token.end());
+        BOOST_CHECK(r);
+        BOOST_CHECK(iter == token.end());
+        if(r)
+        {
+            BOOST_CHECK(r.unwrap().is(value::float_tag));
+            BOOST_CHECK(boost::math::isinf(r.unwrap().get<floating>()));
+            BOOST_CHECK(r.unwrap().get<floating>() > 0.0);
+        }
+        else
+        {
+            std::cerr << r.unwrap_err() << std::endl;
+        }
+    }
+    {
+        const std::string token("-inf");
+        std::string::const_iterator iter(token.begin());
+        const result<value, std::string> r =
+            parse_value(iter, token.end());
+        BOOST_CHECK(r);
+        BOOST_CHECK(iter == token.end());
+        if(r)
+        {
+            BOOST_CHECK(r.unwrap().is(value::float_tag));
+            BOOST_CHECK(boost::math::isinf(r.unwrap().get<floating>()));
+            BOOST_CHECK(r.unwrap().get<floating>() < 0.0);
+        }
+        else
+        {
+            std::cerr << r.unwrap_err() << std::endl;
+        }
+    }
 }
 
 BOOST_AUTO_TEST_CASE(test_nan)
@@ -123,11 +215,11 @@ BOOST_AUTO_TEST_CASE(test_nan)
         BOOST_CHECK(iter == token.end());
         if(r)
         {
-            BOOST_CHECK(r.unwrap() != r.unwrap());
+            BOOST_CHECK(boost::math::isnan(r.unwrap()));
         }
         else
         {
-            std::cerr << r << std::endl;
+            std::cerr << r.unwrap_err() << std::endl;
         }
     }
 
@@ -140,11 +232,11 @@ BOOST_AUTO_TEST_CASE(test_nan)
         BOOST_CHECK(iter == token.end());
         if(r)
         {
-            BOOST_CHECK(r.unwrap() != r.unwrap());
+            BOOST_CHECK(boost::math::isnan(r.unwrap()));
         }
         else
         {
-            std::cerr << r << std::endl;
+            std::cerr << r.unwrap_err() << std::endl;
         }
     }
 
@@ -157,11 +249,11 @@ BOOST_AUTO_TEST_CASE(test_nan)
         BOOST_CHECK(iter == token.end());
         if(r)
         {
-            BOOST_CHECK(r.unwrap() != r.unwrap());
+            BOOST_CHECK(boost::math::isnan(r.unwrap()));
         }
         else
         {
-            std::cerr << r << std::endl;
+            std::cerr << r.unwrap_err() << std::endl;
         }
     }
 }
@@ -177,7 +269,8 @@ BOOST_AUTO_TEST_CASE(test_nan_value)
         BOOST_CHECK(iter == token.end());
         if(r)
         {
-            BOOST_CHECK(r.unwrap().get<floating>() != r.unwrap().get<floating>());
+            BOOST_CHECK(r.unwrap().is(value::float_tag));
+            BOOST_CHECK(boost::math::isnan(r.unwrap().get<floating>()));
         }
         else
         {
@@ -194,7 +287,8 @@ BOOST_AUTO_TEST_CASE(test_nan_value)
         BOOST_CHECK(iter == token.end());
         if(r)
         {
-            BOOST_CHECK(r.unwrap().get<floating>() != r.unwrap().get<floating>());
+            BOOST_CHECK(r.unwrap().is(value::float_tag));
+            BOOST_CHECK(boost::math::isnan(r.unwrap().get<floating>()));
         }
         else
         {
@@ -211,7 +305,8 @@ BOOST_AUTO_TEST_CASE(test_nan_value)
         BOOST_CHECK(iter == token.end());
         if(r)
         {
-            BOOST_CHECK(r.unwrap().get<floating>() != r.unwrap().get<floating>());
+            BOOST_CHECK(r.unwrap().is(value::float_tag));
+            BOOST_CHECK(boost::math::isnan(r.unwrap().get<floating>()));
         }
         else
         {
