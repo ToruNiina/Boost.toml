@@ -149,6 +149,45 @@ get(const toml::value& v)
     }
 }
 
+// std::tm from date, time, local_datetime, offset_datetime
+template<typename T>
+inline typename boost::enable_if<boost::is_same<T, std::tm>, T>::type&
+get(value& v)
+{
+    try
+    {
+        switch(v.which())
+        {
+            case value::date_tag:
+            {
+                return boost::gregorian::to_tm(v.get<toml::date>());
+            }
+            case value::time_tag:
+            {
+                return boost::posix_time::to_tm(v.get<toml::date>());
+            }
+            case value::local_datetime_tag:
+            {
+                return boost::posix_time::to_tm(v.get<toml::local_datetime>());
+            }
+            case value::offset_datetime_tag:
+            {
+                return boost::local_time::to_tm(v.get<toml::date>());
+            }
+            default:
+                throw bad_get((boost::format("toml::get: type of toml value is "
+                    "`toml::%1%`, but type `%2%` is specified.") % v.which() %
+                    boost::typeindex::type_id<T>().pretty_name()).str());
+        }
+    }
+    catch(boost::bad_get const& bg)
+    {
+        throw bad_get((boost::format("toml::get: type of toml value is "
+            "`toml::%1%`, but type `%2%` is specified.") % v.which() %
+            boost::typeindex::type_id<T>().pretty_name()).str());
+    }
+}
+
 // array_like
 template<typename Array>
 typename boost::enable_if<is_array_like<Array>, Array>::type
