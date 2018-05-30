@@ -6,43 +6,43 @@ matrix:
   - os: linux
     language: cpp
     compiler: gcc
-    env: COMPILER="g++-5" CXX_STANDARD=98
+    env: COMPILER="g++-7" CXX_STANDARD=98
     addons:
       apt:
         sources:
         - ubuntu-toolchain-r-test
         packages:
-        - g++-5
+        - g++-7
   - os: linux
     language: cpp
     compiler: gcc
-    env: COMPILER="g++-5" CXX_STANDARD=11
+    env: COMPILER="g++-7" CXX_STANDARD=11
     addons:
       apt:
         sources:
         - ubuntu-toolchain-r-test
         packages:
-        - g++-5
+        - g++-7
   - os: linux
     language: cpp
     compiler: gcc
-    env: COMPILER="g++-5" CXX_STANDARD=14
+    env: COMPILER="g++-7" CXX_STANDARD=14
     addons:
       apt:
         sources:
         - ubuntu-toolchain-r-test
         packages:
-        - g++-5
+        - g++-7
   - os: linux
     language: cpp
     compiler: gcc
-    env: COMPILER="g++-5" CXX_STANDARD=17
+    env: COMPILER="g++-7" CXX_STANDARD=17
     addons:
       apt:
         sources:
         - ubuntu-toolchain-r-test
         packages:
-        - g++-5
+        - g++-7
   - os: linux
     language: cpp
     compiler: clang
