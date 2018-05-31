@@ -86,9 +86,14 @@ struct value
     value(const local_datetime& v): storage_(v){}
     value(const offset_datetime& v): storage_(v){}
 
-    value(const date&     d,  const time& t): storage_(local_datetime(d, t)){}
+    value(const date& d, const time& t)
+        : storage_(local_datetime(d, t))
+    {}
     value(const local_datetime& dt, const time_zone_ptr tzp)
         : storage_(offset_datetime(dt, tzp))
+    {}
+    value(const date& d, const time& t, const time_zone_ptr tzp)
+        : storage_(offset_datetime(local_datetime(d, t), tzp))
     {}
 
     value(const array& v): storage_(v){}
