@@ -151,8 +151,8 @@ get(const toml::value& v)
 
 // std::tm from date, time, local_datetime, offset_datetime
 template<typename T>
-typename boost::enable_if<boost::is_same<T, std::tm>, T>::type&
-get(value& v)
+typename boost::enable_if<boost::is_same<T, std::tm>, T>::type
+get(const value& v)
 {
     try
     {
