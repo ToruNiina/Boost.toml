@@ -211,3 +211,40 @@ BOOST_AUTO_TEST_CASE(test_get_toml_array_of_array)
     BOOST_CHECK_EQUAL(std::get<1>(t).at(2), "baz");
 #endif // TOML_HAS_CXX11_ARRAY
 }
+
+BOOST_AUTO_TEST_CASE(test_get_datetime)
+{
+    {
+        toml::value v1(toml::date(2018, 5, 31));
+        toml::value v2(toml::date(2018, 5, 31),
+                       toml::hours(12) + toml::minutes(34) + toml::seconds(56));
+        toml::time_zone_ptr utc(new boost::local_time::posix_time_zone("UTC"));
+        toml::value v3(toml::date(2018, 5, 31),
+                       toml::hours(12) + toml::minutes(34) + toml::seconds(56),
+                       utc);
+
+        const std::tm t1 = toml::get<std::tm>(v1);
+        BOOST_CHECK_EQUAL(t1.tm_year, 118);
+        BOOST_CHECK_EQUAL(t1.tm_mon,    4); // XXX 0-11
+        BOOST_CHECK_EQUAL(t1.tm_mday,  31);
+        BOOST_CHECK_EQUAL(t1.tm_hour,   0);
+        BOOST_CHECK_EQUAL(t1.tm_min,    0);
+        BOOST_CHECK_EQUAL(t1.tm_sec,    0);
+        const std::tm t2 = toml::get<std::tm>(v2);
+        BOOST_CHECK_EQUAL(t2.tm_year, 118);
+        BOOST_CHECK_EQUAL(t2.tm_mon,    4);
+        BOOST_CHECK_EQUAL(t2.tm_mday,  31);
+        BOOST_CHECK_EQUAL(t2.tm_hour,  12);
+        BOOST_CHECK_EQUAL(t2.tm_min,   34);
+        BOOST_CHECK_EQUAL(t2.tm_sec,   56);
+        const std::tm t3 = toml::get<std::tm>(v3);
+        BOOST_CHECK_EQUAL(t3.tm_year, 118);
+        BOOST_CHECK_EQUAL(t3.tm_mon,    4);
+        BOOST_CHECK_EQUAL(t3.tm_mday,  31);
+        BOOST_CHECK_EQUAL(t3.tm_hour,  12);
+        BOOST_CHECK_EQUAL(t3.tm_min,   34);
+        BOOST_CHECK_EQUAL(t3.tm_sec,   56);
+    }
+}
+
+
