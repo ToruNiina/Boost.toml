@@ -10,7 +10,6 @@
 #include <boost/type_traits.hpp>
 #include <boost/variant.hpp>
 #include <boost/optional.hpp>
-#include <boost/function_types/result_type.hpp>
 #include <ostream>
 #ifndef BOOST_NO_CXX11_HDR_INITIALIZER_LIST
 #include <initializer_list>

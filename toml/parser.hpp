@@ -10,7 +10,6 @@
 #include <boost/config.hpp>
 #include <boost/static_assert.hpp>
 #include <boost/core/addressof.hpp>
-#include <boost/optional/optional_io.hpp>
 #include <iterator>
 #include <vector>
 #include <istream>

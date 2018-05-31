@@ -12,7 +12,6 @@
 #include <boost/tti/has_type.hpp>
 #include <boost/core/enable_if.hpp>
 #include <boost/type_traits.hpp>
-#include <boost/iterator/iterator_traits.hpp>
 #include <boost/cstdint.hpp>
 #include <boost/array.hpp>
 #include <boost/utility/string_ref.hpp>
