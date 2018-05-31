@@ -381,7 +381,8 @@ template<typename charT, typename traits>
 std::basic_ostream<charT, traits>&
 operator<<(std::basic_ostream<charT, traits>& os, const value& v)
 {
-    os << format(v);
+    const std::size_t w = os.width();
+    os << format(v, (w > 2 ? w : 80));
     return os;
 }
 
