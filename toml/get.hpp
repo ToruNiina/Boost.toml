@@ -175,9 +175,11 @@ get(const value& v)
                 return boost::local_time::to_tm(v.get<toml::offset_datetime>());
             }
             default:
+            {
                 throw bad_get((boost::format("toml::get: type of toml value is "
                     "`toml::%1%`, but type `%2%` is specified.") % v.which() %
                     boost::typeindex::type_id<T>().pretty_name()).str());
+            }
         }
     }
     catch(boost::bad_get const& bg)
@@ -334,6 +336,78 @@ get(const toml::value& v)
     }
 }
 #endif// TOML_HAS_CXX11_TUPLE
+
+#ifdef TOML_HAS_CXX11_CHRONO
+
+// c++11 chrono
+template<typename TimePoint>
+typename boost::enable_if<
+    is_std_chrono_system_clock_time_point<TimePoint>, TimePoint>::type
+get(const toml::value& v)
+{
+    try
+    {
+        switch(v.which())
+        {
+            case value::date_tag:
+            {
+                const std::time_t t = boost::posix_time::to_time_t(
+                    boost::posix_time::ptime(
+                        v.get<date>(), boost::posix_time::hours(0)));
+                return std::chrono::system_clock::from_time_t(t);
+            }
+            case value::local_datetime_tag:
+            {
+                const std::time_t t = boost::posix_time::to_time_t(
+                        v.get<local_datetime>());
+                return std::chrono::system_clock::from_time_t(t);
+            }
+            case value::offset_datetime_tag:
+            {
+                const std::time_t t = boost::posix_time::to_time_t(
+                        v.get<offset_datetime>().utc_time());
+                return std::chrono::system_clock::from_time_t(t);
+            }
+            default:
+            {
+                throw bad_get((boost::format("toml::get: type of toml value is "
+                    "`toml::%1%`, but type `%2%` is specified.") % v.which() %
+                    boost::typeindex::type_id<TimePoint>().pretty_name()).str());
+            }
+        }
+    }
+    catch(boost::bad_get const& bg)
+    {
+        throw bad_get((boost::format("toml::get: type of toml value is "
+            "`toml::%1%`, but type `%2%` is specified.") % v.which() %
+            boost::typeindex::type_id<TimePoint>().pretty_name()).str());
+    }
+}
+
+template<typename Duration>
+typename boost::enable_if<is_std_chrono_duration<Duration>, Duration>::type
+get(const toml::value& v)
+{
+    try
+    {
+        const time& t = v.get<time>();
+#ifdef BOOST_DATE_TIME_HAS_NANOSECONDS
+        return std::chrono::duration_cast<Duration>(
+                std::chrono::nanoseconds(t.total_nanoseconds()));
+#else
+        return std::chrono::duration_cast<Duration>(
+                std::chrono::microseconds(t.total_microseconds()));
+#endif
+    }
+    catch(boost::bad_get const& bg)
+    {
+        throw bad_get((boost::format("toml::get: type of toml value is "
+            "`toml::%1%`, but type `%2%` is specified.") % v.which() %
+            boost::typeindex::type_id<Duration>().pretty_name()).str());
+    }
+}
+
+#endif // TOML_HAS_CXX11_CHRONO
 
 } // toml
 #endif// TOML98_GET_HPP

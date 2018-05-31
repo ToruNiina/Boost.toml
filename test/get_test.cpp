@@ -212,7 +212,7 @@ BOOST_AUTO_TEST_CASE(test_get_toml_array_of_array)
 #endif // TOML_HAS_CXX11_ARRAY
 }
 
-BOOST_AUTO_TEST_CASE(test_get_datetime)
+BOOST_AUTO_TEST_CASE(test_get_std_tm)
 {
     {
         toml::value v1(toml::date(2018, 5, 31));
@@ -247,4 +247,52 @@ BOOST_AUTO_TEST_CASE(test_get_datetime)
     }
 }
 
+#ifdef TOML_HAS_CXX11_CHRONO
+BOOST_AUTO_TEST_CASE(test_get_chrono_time_point)
+{
+    {
+        toml::value v1(toml::date(2018, 5, 31));
+        toml::value v2(toml::date(2018, 5, 31),
+                       toml::hours(12) + toml::minutes(34) + toml::seconds(56));
+        toml::time_zone_ptr utc(new boost::local_time::posix_time_zone("UTC"));
+        toml::value v3(toml::date(2018, 5, 31),
+                       toml::hours(12) + toml::minutes(34) + toml::seconds(56),
+                       utc);
+
+        const std::time_t t1 = std::chrono::system_clock::to_time_t(
+                toml::get<std::chrono::system_clock::time_point>(v1));
+        std::tm* tm1  = std::gmtime(&t1);
+        std::tm  tm1_ = toml::get<std::tm>(v1);
+        BOOST_CHECK_EQUAL(tm1->tm_year, tm1_.tm_year);
+        BOOST_CHECK_EQUAL(tm1->tm_mon,  tm1_.tm_mon);
+        BOOST_CHECK_EQUAL(tm1->tm_mday, tm1_.tm_mday);
+        BOOST_CHECK_EQUAL(tm1->tm_hour, tm1_.tm_hour);
+        BOOST_CHECK_EQUAL(tm1->tm_min,  tm1_.tm_min);
+        BOOST_CHECK_EQUAL(tm1->tm_sec,  tm1_.tm_sec);
+
+
+        const std::time_t t2 = std::chrono::system_clock::to_time_t(
+                toml::get<std::chrono::system_clock::time_point>(v2));
+        std::tm* tm2 = std::gmtime(&t2);
+        std::tm  tm2_ = toml::get<std::tm>(v2);
+        BOOST_CHECK_EQUAL(tm2->tm_year, tm2_.tm_year);
+        BOOST_CHECK_EQUAL(tm2->tm_mon,  tm2_.tm_mon);
+        BOOST_CHECK_EQUAL(tm2->tm_mday, tm2_.tm_mday);
+        BOOST_CHECK_EQUAL(tm2->tm_hour, tm2_.tm_hour);
+        BOOST_CHECK_EQUAL(tm2->tm_min,  tm2_.tm_min);
+        BOOST_CHECK_EQUAL(tm2->tm_sec,  tm2_.tm_sec);
+
+        const std::time_t t3 = std::chrono::system_clock::to_time_t(
+                toml::get<std::chrono::system_clock::time_point>(v3));
+        std::tm* tm3 = std::gmtime(&t3);
+        std::tm  tm3_ = toml::get<std::tm>(v3);
+        BOOST_CHECK_EQUAL(tm3->tm_year, tm3_.tm_year);
+        BOOST_CHECK_EQUAL(tm3->tm_mon,  tm3_.tm_mon);
+        BOOST_CHECK_EQUAL(tm3->tm_mday, tm3_.tm_mday);
+        BOOST_CHECK_EQUAL(tm3->tm_hour, tm3_.tm_hour);
+        BOOST_CHECK_EQUAL(tm3->tm_min,  tm3_.tm_min);
+        BOOST_CHECK_EQUAL(tm3->tm_sec,  tm3_.tm_sec);
+    }
+}
+#endif // TOML_HAS_CXX11_CHRONO
 

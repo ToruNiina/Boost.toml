@@ -198,16 +198,17 @@ template<typename T> struct is_map_like : boost::mpl::and_<
 
 #ifdef TOML_HAS_CXX11_CHRONO
 template<typename T>
-struct is_std_chrono_time_point : boost::false_type {};
-template<typename Clock, typename Duaration>
-struct is_std_chrono_time_point<
-    std::chrono::time_point<Clock, Duaration> > : boost::true_type {};
+struct is_std_chrono_system_clock_time_point : boost::false_type {};
+template<typename Duaration>
+struct is_std_chrono_system_clock_time_point<
+    std::chrono::time_point<std::chrono::system_clock, Duaration> >
+: boost::true_type {};
 
 template<typename T>
 struct is_std_chrono_duration : boost::false_type {};
 template<typename Rep, typename Period>
-struct is_std_chrono_duration<
-    std::chrono::duration<Rep, Period> > : boost::true_type {};
+struct is_std_chrono_duration<std::chrono::duration<Rep, Period> >
+: boost::true_type {};
 #endif
 
 } // toml
