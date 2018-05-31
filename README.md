@@ -5,7 +5,8 @@ Boost.toml
 
 Boost.toml is a header-only toml parser depending on Boost.
 
-It is compatible with TOML v0.4.0 (actually, it contains all the features in [d3d6f32](https://github.com/toml-lang/toml/tree/d3d6f32b73369a9bfd8411a143718f7a4a84ee2c)).
+It is compatible with TOML v0.4.0 (actually, it contains all the features in
+[d3d6f32](https://github.com/toml-lang/toml/tree/d3d6f32b73369a9bfd8411a143718f7a4a84ee2c)).
 
 tested with `-std=c++(98|11|14|17)` on Linux/macOS. Some functionalities
 (e.g. construction from `std::initilalizer_list` (after c++11), getting toml
@@ -647,20 +648,27 @@ See also [underlying types](#underlying-types).
 
 Here, types can be converted from toml types are listed.
 
-| toml value type   | convertible types                                                            |
-|:------------------|:-----------------------------------------------------------------------------|
-| `boolean`         | `bool` only                                                                  |
-| `integer`         | types that makes `boost::is_integral<T>::value` true (excepting `bool`).     |
-| `floating`        | types that makes `boost::is_floating_point<T>::value` true.                  |
-| `string`          | `std::string`, `std::string_view`, `boost::string_view`, `boost::string_ref` |
-| `date`            | -                              |
-| `time`            | -                              |
-| `local_datetime`  | -                              |
-| `offset_datetime` | -                              |
-| `array`           | container classes (see below). |
-| `table`           | map-like classes (see below).  |
+| toml value type   | convertible types                                                             |
+|:------------------|:------------------------------------------------------------------------------|
+| `boolean`         | `bool` only                                                                   |
+| `integer`         | types that makes `boost::is_integral<T>::value` true (excepting `bool`).      |
+| `floating`        | types that makes `boost::is_floating_point<T>::value` true.                   |
+| `string`          | `std::string&`, `std::string_view`, `boost::string_view`, `boost::string_ref` |
+| `date`            | `std::tm`, `std::chrono::time_point`                                          |
+| `time`            | `std::tm`, `std::chrono::duration`                                            |
+| `local_datetime`  | `std::tm`, `std::chrono::time_point`                                          |
+| `offset_datetime` | `std::tm`, `std::chrono::time_point`                                          |
+| `array`           | container classes (see below).                                                |
+| `table`           | map-like classes (see below).                                                 |
 
 `toml::string` can safely be converted to an lvalue of `std::string`.
+
+Because `std::time_t` is integral type, it collides with `get<integer>`.
+Thus getting `std::time_t` from datetime objects is not supported.
+
+Boost.chrono requires building and linking (without some preprocessor macros).
+To use it as a header only library, some configuration is needed.
+Currently, it is not supported.
 
 `toml::array` can be converted to a class that ...
 * has member types named `iterator` and `value_type`
