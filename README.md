@@ -5,10 +5,10 @@ Boost.toml
 
 Boost.toml is a header-only toml parser depending on Boost.
 
-It is compatible with TOML v0.4.0 (actually, it contains almost all the features in [d3d6f32](https://github.com/toml-lang/toml/tree/d3d6f32b73369a9bfd8411a143718f7a4a84ee2c)).
+It is compatible with TOML v0.4.0 (actually, it contains all the features in [d3d6f32](https://github.com/toml-lang/toml/tree/d3d6f32b73369a9bfd8411a143718f7a4a84ee2c)).
 
 tested with `-std=c++(98|11|14|17)` on Linux/macOS. Some functionalities
-(e.g. construction from `std::initilalizer_list`(after c++11), getting toml
+(e.g. construction from `std::initilalizer_list` (after c++11), getting toml
 String as a `std::string_view` (after c++17)) are disabled when older standard
 version is given.
 
@@ -45,7 +45,7 @@ __NOTE__: This library is not a part of Boost C++ Library.
 
 ## example code
 
-Here is an example toml file (a bit modified from original toml repository).
+Here is an example toml file (a bit modified from original file found in toml repository).
 
 ```toml
 title = "TOML Example"
@@ -156,15 +156,16 @@ Boost.toml provides a really powerful function to get a value from TOML data.
 
 ### basic usage of `toml::get`
 
-You can `get` values from a toml file by using `toml::get<T>` function.
+You can "get" values from a toml file by using `toml::get<T>` function.
 
 ```cpp
-// you can get a reference when you `get` as an exact toml type
+// you can get a reference when you specify an exact toml type
 toml::value v1(42);
 toml::integer& i_ref = toml::get<toml::integer>(v1);
 i_ref = 6 * 9; // v1 will be 54.
 
 // you can get a value as non-toml type if they are convertible.
+// in that case, a reference that points to the internal value cannot be gotten.
 std::uint32_t i = toml::get<std::uint32_t>(v1); // 54
 
 // to avoid deep-copy, it is useful to get const reference.
@@ -208,20 +209,20 @@ from `toml::array`.
 
 ```cpp
 toml::value v{1, 2};
-std::pair<int, unsigned> p = toml::get<std::pair<int, unsigned>>(v);
+std::pair<int, unsigned>  p = toml::get<std::pair<int, unsigned>>(v);
 
-toml::value v{1,2,3,4};
-std::tuple<int, int, int, int> t = toml::get<std::tuple<int, int, int, int>>(v);
+toml::value v{1, 2, 3};
+std::tuple<int, int, int> t = toml::get<std::tuple<int, int, int>>(v);
 ```
 
 currently, `boost::tuple` is not supported for this purpose.
 
-### getting `toml::table` and Array of Table
+### getting `toml::table` and Array of Tables
 
-Array of Tables can be obtained as the same way described before.
+Array of Tables can be obtained in the same way described before.
 
 ```cpp
-// it is just an array of table.
+// it is just an array of tables.
 std::vector<toml::table> tables = toml::get<std::vector<toml::table> >(v);
 ```
 
@@ -259,7 +260,7 @@ auto tpl = toml::get<std::tuple<std::vector<int>, std::vector<std::string>>>(v);
 But generally, you cannot know the length of the array and the type of the elements
 in toml file before reading it. In that case, `toml::array` or
 `std::vector<toml::value>` can be used (actually, `toml::array` is just an alias
-of `boost::container::vector<toml::value>`, so in this case the conversion might
+of `boost::container::vector<toml::value>`, so in this case the conversion may
 not be needed).
 
 ```cpp
@@ -284,6 +285,8 @@ Because `toml::get` casts the value when you pass your favorite container to
 `toml::get`, it essentially does the same thing as the following.
 
 ```cpp
+// conversion from toml::array to std::vector<int>.
+// essentially same as toml::get<std::vector<int>>(val).
 std::vector<int> get_int_vec(const toml::value& v)
 {
     const toml::array& ar = v.get<toml::array>();
@@ -294,7 +297,7 @@ std::vector<int> get_int_vec(const toml::value& v)
 }
 ```
 
-getting `toml::table` as a different `map` type is basically the same.
+getting `toml::table` as a different `map` type also copies the elements deeply.
 
 ```cpp
 std::map<toml::key, toml::value> get_std_map(const toml::value& v)
@@ -316,6 +319,7 @@ To avoid deep copy, you can get them as a (const) reference.
 toml::value  v{1,2,3,4,5};
 toml::array& ar = toml::get<toml::array>(v);
 std::int64_t i  = toml::get<std::int64_t>(ar.at(0));
+// one more toml::get is needed because toml::array is an array of toml::values.
 ```
 
 Although it is a bit boring to call `toml::get` for all the elements in the
@@ -326,6 +330,7 @@ array, but there is a tradeoff between speed and easiness.
 Boost.toml regards dotted keys as a table.
 
 ```toml
+# dotted keys
 physical.color = "red"
 physical.shape = "sphere"
 # ... is same as
@@ -463,7 +468,7 @@ std::cout << toml::format(toml::value{1, 2, 3});
 // [1,2,3]
 ```
 
-`toml::format` sometimes adds newlines.
+`toml::format` sometimes adds newlines to avoid too long line.
 
 ```cpp
 toml::value str("too long string would be splitted to multiple lines, "
@@ -510,7 +515,6 @@ std::cout << toml::format(val, 100);
 
 By default, the threshold is set as 80.
 
-
 ### formatting toml data
 
 If you pass a `toml::table` to `toml::format`, it prints a TOML file considering
@@ -532,8 +536,9 @@ std::cout << tab << std::endl;
 // e = 2.718000
 ```
 
-There is a simplest example in `sample/` directory that reads toml file and
-outputs the content into `stdout`.
+You can find the simplest example in `sample/` directory that reads toml file
+and outputs the content into `stdout`. You can see what happens if Boost.toml
+formats your toml file by passing a file to the sample program.
 
 ## datetime operation
 
@@ -636,11 +641,17 @@ to use Boost.Container.
 
 ### types that are convertible from toml value by using `toml::get`
 
+You can get a reference that points an internal value if you specify
+the underlying types (those are omitted here because it is redundant).
+See also [underlying types](#underlying-types).
+
+Here, types can be converted from toml types are listed.
+
 | toml value type   | convertible types                                                            |
 |:------------------|:-----------------------------------------------------------------------------|
 | `boolean`         | `bool` only                                                                  |
-| `integer`         | types that makes `boost::is_integral::value` true (excepting `bool`).        |
-| `floating`        | types that makes `boost::is_floating_point::value` true.                     |
+| `integer`         | types that makes `boost::is_integral<T>::value` true (excepting `bool`).     |
+| `floating`        | types that makes `boost::is_floating_point<T>::value` true.                  |
 | `string`          | `std::string`, `std::string_view`, `boost::string_view`, `boost::string_ref` |
 | `date`            | -                              |
 | `time`            | -                              |
