@@ -37,6 +37,10 @@
 #    include <tuple>
 #    define TOML_HAS_CXX11_TUPLE
 #  endif // BOOST_NO_CXX11_HDR_TUPLE
+#  ifndef BOOST_NO_CXX11_HDR_CHRONO
+#    include <chrono>
+#    define TOML_HAS_CXX11_CHRONO
+#  endif // BOOST_NO_CXX11_HDR_CHRONO
 #endif //c++11
 
 namespace toml
@@ -189,6 +193,22 @@ template<typename T> struct is_map_like : boost::mpl::and_<
         has_type_key_type<T>,                      // has key_type
         has_type_mapped_type<T>                    // has mapped_type
     >{};
+
+// std::chrono -----------------------------------------------------------------
+
+#ifdef TOML_HAS_CXX11_CHRONO
+template<typename T>
+struct is_std_chrono_time_point_type : boost::false_type {};
+template<typename Clock, typename Duaration>
+struct is_std_chrono_time_point_type<
+    std::chrono::time_point<Clock, Duaration> > : boost::true_type {};
+
+template<typename T>
+struct is_std_chrono_duration_type : boost::false_type {};
+template<typename Rep, typename Period>
+struct is_std_chrono_duration_type<
+    std::chrono::duration<Rep, Period> > : boost::true_type {};
+#endif
 
 } // toml
 #endif// TOML_TYPE_TRAITS_HPP
