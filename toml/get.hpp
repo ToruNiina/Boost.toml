@@ -151,7 +151,7 @@ get(const toml::value& v)
 
 // std::tm from date, time, local_datetime, offset_datetime
 template<typename T>
-inline typename boost::enable_if<boost::is_same<T, std::tm>, T>::type&
+typename boost::enable_if<boost::is_same<T, std::tm>, T>::type&
 get(value& v)
 {
     try
@@ -164,7 +164,7 @@ get(value& v)
             }
             case value::time_tag:
             {
-                return boost::posix_time::to_tm(v.get<toml::date>());
+                return boost::posix_time::to_tm(v.get<toml::time>());
             }
             case value::local_datetime_tag:
             {
@@ -172,7 +172,7 @@ get(value& v)
             }
             case value::offset_datetime_tag:
             {
-                return boost::local_time::to_tm(v.get<toml::date>());
+                return boost::local_time::to_tm(v.get<toml::offset_datetime>());
             }
             default:
                 throw bad_get((boost::format("toml::get: type of toml value is "
