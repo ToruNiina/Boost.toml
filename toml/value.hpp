@@ -196,7 +196,7 @@ struct value
 
     void swap(value& rhs) {this->storage_.swap(rhs.storage_);}
 
-#if __cplusplus <= 201103L
+#if __cplusplus < 201103L
     template<typename Visitor>
     typename Visitor::result_type apply_visitor(Visitor v) const
     {return boost::apply_visitor(v, this->storage_);}
@@ -206,14 +206,16 @@ struct value
     {return boost::apply_visitor(v, this->storage_);}
 #else
     template<typename Visitor>
-    auto apply_visitor(Visitor v) const
-        -> decltype(boost::apply_visitor(v, std::declval<storage_type>()))
-    {return boost::apply_visitor(v, this->storage_);}
+    auto apply_visitor(Visitor&& v) const
+        -> decltype(boost::apply_visitor(std::forward<Visitor>(v),
+                                         std::declval<storage_type const&>()))
+    {return boost::apply_visitor(std::forward<Visitor>(v), this->storage_);}
 
     template<typename Visitor>
-    auto apply_visitor(Visitor v)
-        -> decltype(boost::apply_visitor(v, std::declval<storage_type>()))
-    {return boost::apply_visitor(v, this->storage_);}
+    auto apply_visitor(Visitor&& v)
+        -> decltype(boost::apply_visitor(std::forward<Visitor>(v),
+                                         std::declval<storage_type&>()))
+    {return boost::apply_visitor(std::forward<Visitor>(v), this->storage_);}
 #endif
 
     bool operator==(const value& r) const {return this->storage_ == r.storage_;}
