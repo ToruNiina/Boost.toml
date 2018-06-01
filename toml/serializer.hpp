@@ -90,7 +90,8 @@ struct serializer : boost::static_visitor<std::string>
         }
         else
         {
-            if(std::find(s.str.begin(), s.str.end(), '\n') != s.str.end())
+            if(std::find(s.str.begin(), s.str.end(), '\n') != s.str.end() ||
+               std::find(s.str.begin(), s.str.end(), '\'') != s.str.end() )
             {
                 const std::string open("'''\n");
                 const std::string close("'''");
