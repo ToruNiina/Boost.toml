@@ -206,8 +206,19 @@ struct serializer : boost::static_visitor<std::string>
             // for table inside of an element of array of table.
             return make_inline_table(v);
         }
+
+        bool table_only = !(v.empty());
+        for(table::const_iterator i(v.begin()), e(v.end()); i!=e; ++i)
+        {
+            if(!i->second.is(value::table_tag))
+            {
+                table_only = false;
+                break;
+            }
+        }
+
         std::string token;
-        if(!keys_.empty())
+        if(!keys_.empty() && !table_only)
         {
             token += '[';
             token += serialize_dotted_key(keys_);
