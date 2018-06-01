@@ -456,16 +456,17 @@ toml::value v5{{"i", 42}, {"pi", 3.14}, {"key", "value"}}; // become a table
 ### printing toml values
 
 Boost.toml has `toml::format` function that converts a `toml::value` to
-`std::string`.
+`std::string`. Since it returns a string, you can output it.
 
 ```cpp
-std::cout << toml::format(toml::value(42));
+std::string i = toml::format(toml::value(42));
 // 42
-std::cout << toml::format(toml::value("string with\nnewline"));
+std::string s = toml::format(toml::value("string with\nnewline"));
 // """
 // string with
 // newline
 // """
+
 std::cout << toml::format(toml::value(toml::date(1979, 5, 27), toml::hours(7) + toml::minutes(32)));
 // 1979-05-27T07:32:00
 std::cout << toml::format(toml::value{1, 2, 3});
@@ -478,7 +479,7 @@ std::cout << toml::format(toml::value{1, 2, 3});
 toml::value str("too long string would be splitted to multiple lines, "
                 "and the threshould can be passed to toml::format function. "
                 "By default, the threshold is 80.");
-std::cout << str;
+std::cout << toml::format(str);
 // """
 // too long string would be splitted to multiple lines, and the threshould can be \
 // passed to toml::format function. By default, the threshold is 80.\
@@ -487,7 +488,7 @@ toml::value ary{
     "If an array has many elements so the result of toml::format become longer",
     "than a threshold toml::format will print them in multi-line array."
     };
-std::cout << ary;
+std::cout << toml::format(ary);
 // [
 //  "If an array has many elements so the result of toml::format become longer",
 //  "than a threshold toml::format will print them in multi-line array.",
@@ -503,7 +504,7 @@ toml::value aot{
     toml::table{{"key1", 2}, {"key2", 6.28}},
     toml::table{{"key1", 3}, {"key2", 9.42}}
 };
-std::cout << aot;
+std::cout << foml::format(aot);
 // [
 //  {key1 = "value1-1", key2 = "value2-1"},
 //  {key1 = "value1-2", key2 = "value2-2"},
@@ -518,6 +519,22 @@ std::cout << toml::format(val, 100);
 ```
 
 By default, the threshold is set as 80.
+
+It also supports `iostream`. When you output it into `std::ostream`,
+`toml::format` will be called automatically.
+
+```cpp
+toml::value val;
+std::cout << val;
+```
+
+You can set the threshold by putting `std::setw` before outputting your toml value.
+
+```cpp
+toml::value val;
+std::cout << val; // calls toml::format(val, 80)
+std::cout << std::setw(100) << val; // calls toml::format(val, 100)
+```
 
 ### formatting toml data
 
