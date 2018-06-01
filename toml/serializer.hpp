@@ -209,7 +209,7 @@ struct serializer : boost::static_visitor<std::string>
         }
         std::string token;
         token += "[\n";
-        for(typename array::const_iterator i(v.begin()), e(v.end()); i!=e; ++i)
+        for(array::const_iterator i(v.begin()), e(v.end()); i!=e; ++i)
         {
             token += apply_visitor(*this, *i);
             token += ",\n";
@@ -327,7 +327,7 @@ struct serializer : boost::static_visitor<std::string>
     {
         std::string token;
         token += '[';
-        for(typename array::const_iterator i(v.begin()), e(v.end()); i!=e; ++i)
+        for(array::const_iterator i(v.begin()), e(v.end()); i!=e; ++i)
         {
             token += apply_visitor(serializer(
                         std::numeric_limits<std::size_t>::max()), *i);
@@ -341,7 +341,7 @@ struct serializer : boost::static_visitor<std::string>
     {
         std::string token;
         token += '{';
-        for(typename table::const_iterator i(v.begin()), e(v.end()); i!=e; ++i)
+        for(table::const_iterator i(v.begin()), e(v.end()); i!=e; ++i)
         {
             token += i->first;
             token += '=';
@@ -391,7 +391,7 @@ struct serializer : boost::static_visitor<std::string>
         }
 
         // 3. normal tables
-        for(typename table::const_iterator i(v.begin()), e(v.end()); i!=e; ++i)
+        for(table::const_iterator i(v.begin()), e(v.end()); i!=e; ++i)
         {
             if(!i->second.is(value::table_tag)){continue;}
             std::vector<toml::key> ks(this->keys_);
