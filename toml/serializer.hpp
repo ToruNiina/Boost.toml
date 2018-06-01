@@ -60,7 +60,8 @@ struct serializer : boost::static_visitor<std::string>
             else{break;}
         }
         token.erase(token.size() - exp.size());
-        while(exp.size() > 1 && exp.back() == '0'){exp.erase(exp.size()-1, 1);}
+        while(exp.size() > 1 && exp.at(exp.size()-1) == '0')
+        {exp.erase(exp.size()-1, 1);}
         std::reverse_copy(exp.begin(), exp.end(), std::back_inserter(token));
         return token;
     }
