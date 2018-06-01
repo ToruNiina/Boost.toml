@@ -406,10 +406,10 @@ without knowing its type.
 
 ```cpp
 toml::table data = toml::parse("sample.toml");
-const auto twice = toml::apply_visitor(
-    [](const auto& val) {return val + val}, data["number"]);
-const auto half  = toml::visit( // completely same function as above
-    [](const auto& val) {return val / 2},   data["number"]);
+toml::apply_visitor([](const auto& val) {std::cout << val << std::endl;},
+                    data["number"]);
+toml::visit([](const auto& val) {std::cerr << val << std::endl;},
+            data["number"]);
 ```
 
 The usage is similar to `boost::apply_visitor` and `boost::variant`, bacause
