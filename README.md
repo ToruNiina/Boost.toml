@@ -335,7 +335,7 @@ Boost.toml regards dotted keys as a table.
 # dotted keys
 physical.color = "red"
 physical.shape = "sphere"
-# ... is same as
+# the above key-value pairs are same as
 physical = {color = "red", shape = "sphere"}
 # or
 [physical]
@@ -669,8 +669,8 @@ Here, types can be converted from toml types are listed.
 Because `std::time_t` is integral type, it collides with `get<integer>`.
 Thus getting `std::time_t` from datetime objects is not supported.
 
-Boost.chrono requires building and linking (without some preprocessor macros).
-To use it as a header only library, some configuration is needed.
+Boost.chrono normally requires building and linking.
+To use it as a header only library, some preprocessor macros are needed.
 Currently, it is not supported.
 
 `toml::array` can be converted to a class that ...
@@ -720,8 +720,8 @@ struct value
 
     value(const char* v,        string::kind_t k);
     value(const std::string& v, string::kind_t k);
-    value(const date&           d,      const time& t);
-    value(const local_datetime& dt,     const time_zone_ptr tzp);
+    value(const date&                d, const time& t);
+    value(const local_datetime&     dt, const time_zone_ptr tzp);
     value(const date& d, const time& t, const time_zone_ptr tzp);
 
     // enabled after c++11.
