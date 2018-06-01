@@ -43,8 +43,26 @@ struct serializer : boost::static_visitor<std::string>
     }
     std::string operator()(const floating f) const
     {
-        std::ostringstream oss; oss << std::fixed << std::showpoint << f;
-        return oss.str();
+        std::ostringstream oss; oss << std::showpoint << f;
+        std::string token(oss.str());
+        {
+            std::string::iterator E = std::find(token.begin(), token.end(), 'E');
+            if(E != token.end()){*E = 'e';}
+        }
+        std::string::iterator e = std::find(token.begin(), token.end(), 'e');
+        if(e == token.end()){return token;}
+        // zero-prefix in an exponent part is not allowed in TOML.
+        std::string exp;
+        for(std::reverse_iterator<std::string::iterator>
+                iter(token.end()), iend(token.begin()); iter != iend; ++iter)
+        {
+            if('0' <= *iter && *iter <= '9'){exp += *iter;}
+            else{break;}
+        }
+        token.erase(token.size() - exp.size());
+        while(exp.size() > 1 && exp.back() == '0'){exp.erase(exp.size()-1, 1);}
+        std::reverse_copy(exp.begin(), exp.end(), std::back_inserter(token));
+        return token;
     }
     std::string operator()(const string& s) const
     {
