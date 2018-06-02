@@ -70,28 +70,17 @@ struct failure
     value_type value;
 };
 
-template<typename T>
-success<typename boost::remove_const<
-    typename boost::remove_reference<T>::type>::type>
-ok(const T& v)
-{
-    return success<typename boost::remove_const<
-        typename boost::remove_reference<T>::type>::type>(v);
-}
-template<typename T>
-failure<typename boost::remove_const<
-    typename boost::remove_reference<T>::type>::type>
-err(const T& v)
-{
-    return failure<typename boost::remove_const<
-        typename boost::remove_reference<T>::type>::type>(v);
-}
 
 #ifdef BOOST_HAS_RVALUE_REFS
 template<typename T>
 success<T> ok(T&& v)  {return success<T>(std::forward<T>(v));}
 template<typename T>
 failure<T> err(T&& v) {return failure<T>(std::forward<T>(v));}
+#else
+template<typename T>
+success<T> ok(const T& v) {return success<T>(v);}
+template<typename T>
+failure<T> err(const T& v) {return failure<T>(v);}
 #endif
 
 template<typename Ok, typename Err>
