@@ -3,7 +3,7 @@ Boost.toml
 
 [![Build Status](https://travis-ci.com/ToruNiina/Boost.toml.svg?token=3rmRuAkSVRafwq2Rbd9b&branch=master)](https://travis-ci.com/ToruNiina/Boost.toml)
 
-Boost.toml is a header-only toml parser depending on Boost.
+Boost.toml is a (almost) header-only toml library depending on Boost.
 
 It is compatible with TOML v0.4.0 (actually, it contains all the features in
 [d3d6f32](https://github.com/toml-lang/toml/tree/d3d6f32b73369a9bfd8411a143718f7a4a84ee2c)).
@@ -15,6 +15,10 @@ version is given.
 
 Boost.toml depends on relatively later versions of the Boost C++ Library
 (tested with Boost 1.67.0 on Travis CI).
+
+Boost.toml depends Boost.Date\_Time that requires linking, but most of the
+functionalities can be used without linking, so normally you don't need to
+build and link boost.
 
 __NOTE__: This library is not a part of Boost C++ Library.
 
