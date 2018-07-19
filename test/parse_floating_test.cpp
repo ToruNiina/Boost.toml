@@ -23,6 +23,8 @@ BOOST_AUTO_TEST_CASE(test_fractional)
     TOML_PARSE_CHECK_EQUAL(parse_floating, "123_456.789",       floating,  123456.789);
     TOML_PARSE_CHECK_EQUAL(parse_floating, "+123_456.789",      floating,  123456.789);
     TOML_PARSE_CHECK_EQUAL(parse_floating, "-123_456.789",      floating, -123456.789);
+    TOML_PARSE_CHECK_EQUAL(parse_floating, "+0.0",              floating,  0.0);
+    TOML_PARSE_CHECK_EQUAL(parse_floating, "-0.0",              floating, -0.0);
 }
 
 BOOST_AUTO_TEST_CASE(test_fractional_value)
@@ -39,6 +41,8 @@ BOOST_AUTO_TEST_CASE(test_fractional_value)
     TOML_PARSE_CHECK_EQUAL(parse_value, "123_456.789",       value, value( 123456.789));
     TOML_PARSE_CHECK_EQUAL(parse_value, "+123_456.789",      value, value( 123456.789));
     TOML_PARSE_CHECK_EQUAL(parse_value, "-123_456.789",      value, value(-123456.789));
+    TOML_PARSE_CHECK_EQUAL(parse_value, "+0.0",              value, value( 0.0));
+    TOML_PARSE_CHECK_EQUAL(parse_value, "-0.0",              value, value(-0.0));
 }
 
 BOOST_AUTO_TEST_CASE(test_exponential)
@@ -59,6 +63,8 @@ BOOST_AUTO_TEST_CASE(test_exponential)
     TOML_PARSE_CHECK_EQUAL(parse_floating, "123E-10",    floating, 123e-10);
     TOML_PARSE_CHECK_EQUAL(parse_floating, "1_2_3E-10",  floating, 123e-10);
     TOML_PARSE_CHECK_EQUAL(parse_floating, "1_2_3E-1_0", floating, 123e-10);
+    TOML_PARSE_CHECK_EQUAL(parse_floating, "+0e0",       floating,  0.0);
+    TOML_PARSE_CHECK_EQUAL(parse_floating, "-0e0",       floating, -0.0);
 }
 
 BOOST_AUTO_TEST_CASE(test_exponential_value)
@@ -79,6 +85,8 @@ BOOST_AUTO_TEST_CASE(test_exponential_value)
     TOML_PARSE_CHECK_EQUAL(parse_value, "123E-10",    value, value(123e-10));
     TOML_PARSE_CHECK_EQUAL(parse_value, "1_2_3E-10",  value, value(123e-10));
     TOML_PARSE_CHECK_EQUAL(parse_value, "1_2_3E-1_0", value, value(123e-10));
+    TOML_PARSE_CHECK_EQUAL(parse_value, "+0e0",       value, value( 0.0));
+    TOML_PARSE_CHECK_EQUAL(parse_value, "-0e0",       value, value(-0.0));
 }
 BOOST_AUTO_TEST_CASE(test_fe)
 {
