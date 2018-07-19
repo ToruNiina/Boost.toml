@@ -5,20 +5,15 @@ Boost.toml
 
 Boost.toml is a (almost) header-only toml library depending on Boost.
 
-It is compatible with TOML v0.4.0 (actually, it contains all the features in
-[d3d6f32](https://github.com/toml-lang/toml/tree/d3d6f32b73369a9bfd8411a143718f7a4a84ee2c)).
+It is compatible with [TOML v0.5.0](https://github.com/toml-lang/toml/blob/master/versions/en/toml-v0.5.0.md)
 
-tested with `-std=c++(98|11|14|17)` on Linux/macOS. Some functionalities
+tested with `C++(98|11|14|17)` on Linux/macOS. Some functionalities
 (e.g. construction from `std::initilalizer_list` (after c++11), getting toml
 String as a `std::string_view` (after c++17)) are disabled when older standard
 version is given.
 
 Boost.toml depends on relatively later versions of the Boost C++ Library
 (tested with Boost 1.67.0 on Travis CI).
-
-Boost.toml depends Boost.Date\_Time that requires linking, but most of the
-functionalities can be used without linking, so normally you don't need to
-build and link boost.
 
 __NOTE__: This library is not a part of Boost C++ Library.
 
@@ -45,6 +40,7 @@ __NOTE__: This library is not a part of Boost C++ Library.
     - [map class that represents `toml::table`](#map-class-that-represents-tomltable)
     - [why not STL container?](#why-not-stl-container)
     - [types that are convertible from toml value by using `toml::get`](#types-that-are-convertible-from-toml-value-by-using-tomlget)
+- [supplemental notes](#supplemental-notes)
 - [synopsis](#synopsis)
 - [Licensing terms](#licensing-terms)
 
@@ -701,6 +697,12 @@ Currently, it is not supported.
 
 `toml::table` can be converted to a class that ...
 * has member types named `iterator`, `value_type`, `key_type` and `mapped_type`.
+
+## supplemental notes
+
+Although Boost.toml depends Boost.Date\_Time that requires linking, it normally
+does not require linking because most of the functionalities of Boost.Date\_Time
+can be used without linking.
 
 ## Synopsis
 
