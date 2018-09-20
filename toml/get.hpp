@@ -89,6 +89,21 @@ get(value const& v)
     }
 }
 
+// toml::value itself. nothing needed!
+template<typename T>
+typename boost::enable_if<boost::is_same<T, value>, T>::type&
+get(value& v)
+{
+    return v;
+}
+template<typename T>
+typename boost::enable_if<boost::is_same<T, value>, T>::type const&
+get(value const& v)
+{
+    return v;
+}
+
+
 // ---------------------------------------------------------------------------
 // conversions. return a prvalue
 
