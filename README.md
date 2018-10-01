@@ -712,9 +712,27 @@ Boost.chrono is currently not supported.
 
 ## supplemental notes
 
-Although Boost.toml depends Boost.Date\_Time that requires linking, it normally
-does not require linking because most of the functionalities of Boost.Date\_Time
-can be used without linking.
+### Boost.Date\_Time and linking
+
+Boost.toml depends on Boost.Date\_Time. As [Boost.Date\_Time says](https://www.boost.org/doc/libs/1_68_0/doc/html/date_time/details.html#date_time.buildinfo),
+it has a few functions that require linking. However, it also says that most of
+the users can use it __without__ linking because most of the parts are
+implemented as a header-only library. Boost.toml uses only functions that does
+not need to link, so you can use it as a header-only library unless you want to
+use the functions defined in Boost.Date\_Time that require linking.
+
+### `error: wrong number of template arguments (11, should be at least 0)`
+
+Boost.toml depends on Boost.MPL because it supports C++98.
+To use some meta-functions defined in Boost.MPL with a lot of arguments, it
+overwrites the value of `BOOST_MPL_LIMIT_METAFUNCTION_ARITY`
+(see [the source](toml/predefine.hpp)). This is required to extend the number
+of arguments in Boost.MPL. It means that if you include a header of another
+Boost library which includes a header of Boost.MPL before including boost.toml,
+the macro couldn't be overwritten. It causes an error while compiling.
+
+To workaround this, you need to include `"Boost.toml/toml/toml.hpp"` before
+including other header files.
 
 ## Synopsis
 
