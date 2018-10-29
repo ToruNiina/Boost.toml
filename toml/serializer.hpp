@@ -354,11 +354,11 @@ struct serializer : boost::static_visitor<std::string>
         token += '{';
         for(table::const_iterator i(v.begin()), e(v.end()); i!=e; ++i)
         {
+            if(i != v.begin()) {token += ',';}
             token += i->first;
             token += '=';
             token += apply_visitor(serializer(true,
                         std::numeric_limits<std::size_t>::max()), i->second);
-            token += ',';
         }
         token += '}';
         return token;
