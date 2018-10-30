@@ -339,9 +339,9 @@ struct serializer : boost::static_visitor<std::string>
         token += '[';
         for(array::const_iterator i(v.begin()), e(v.end()); i!=e; ++i)
         {
+            if(i != v.begin()) {token += ',';}
             token += apply_visitor(serializer(true,
                         std::numeric_limits<std::size_t>::max()), *i);
-            token += ',';
         }
         token += ']';
         return token;
