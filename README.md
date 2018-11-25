@@ -3,6 +3,8 @@ Boost.toml
 
 [![Build Status](https://travis-ci.com/ToruNiina/Boost.toml.svg?token=3rmRuAkSVRafwq2Rbd9b&branch=master)](https://travis-ci.com/ToruNiina/Boost.toml)
 
+[日本語](README_ja.md)
+
 Boost.toml is a header-only toml library depending on Boost.
 
 compatible with [TOML v0.5.0](https://github.com/toml-lang/toml/blob/master/versions/en/toml-v0.5.0.md).
