@@ -28,18 +28,18 @@ __注意__: このライブラリはBoostライブラリの一部ではありま
     - [テーブルやテーブルの配列を取得する](#テーブルやテーブルの配列を取得する)
     - [パフォーマンスについての補足](#パフォーマンスについての補足)
 - [dotted keyの扱い](#dotted-keyの扱い)
-- [値の型を確認する](#confirming-value-type)
-- [型を確認せずにアクセスする](#visiting-value-that-has-unknown-type)
-- [データのフォーマット](#formatting-toml-values)
-    - [TOMLデータを作る](#constructing-toml-values)
-    - [値を出力する](#printing-toml-values)
-    - [ファイルを出力する](#formatting-toml-data)
-- [日時の取り扱い](#datetime-operation)
-- [データの型について](#underlying-types)
-    - [文字列の種類](#tomlstring-and-basic-literal-flags)
-    - [テーブルに対応するクラス](#map-class-that-represents-tomltable)
-    - [なぜBoost.Containerを使うのか](#why-not-stl-container)
-    - [`toml::get`によって変換可能な型の一覧](#types-that-are-convertible-from-toml-value-by-using-tomlget)
+- [値の型を確認する](#値の型を確認する)
+- [型を確認せずにアクセスする](#型を確認せずにアクセスする)
+- [データのフォーマット](#データのフォーマット)
+    - [TOMLデータを作る](#TOMLデータを作る)
+    - [値を出力する](#値を出力する)
+    - [ファイルを出力する](#ファイルを出力する)
+- [日時の取り扱い](#日時の取り扱い)
+- [データの型について](#データの型について)
+    - [文字列の種類](#文字列の種類)
+    - [テーブルに対応するクラス](#テーブルに対応するクラス)
+    - [なぜBoost.Containerを使うのか](#なぜBoost.Containerを使うのか)
+    - [`toml::get`によって変換可能な型の一覧](#tomlgetによって変換可能な型の一覧)
 - [補遺](#補遺)
 - [synopsis](#synopsis)
 - [ライセンス条項](#ライセンス条項)
@@ -401,6 +401,8 @@ switch(v.which())
 
 Boost.tomlは`toml::apply_visitor`と`toml::visit`関数を用意しています。
 使い方は`boost::variant`に対する`boost::apply_visitor`と同じです。
+簡便さのため、`std::visit`を意識した`toml::visit`も用意されています。
+使い方は両者完全に同一です。
 
 ```cpp
 toml::table data = toml::parse("sample.toml");
@@ -414,10 +416,10 @@ toml::visit([](const auto& val) {std::cerr << val << std::endl;},
 
 Boost.tomlはデータの出力もサポートしています。
 
-### constructing toml values
+### TOMLデータを作る
 
-`toml::value` is constructible from toml-convertible types like `std::int64_t`,
-`double`, `float`, `std::string`, `const char*`, and many others.
+`toml::value` は、`std::int64_t`, `double`, `float`, `std::string`,
+`const char*`, など多くの非`toml`型から構築できます。
 
 ```cpp
 toml::value v1(42u);
@@ -429,7 +431,7 @@ toml::time  t(toml::hours(1), toml::minutes(30));
 toml::value v3(d, t); // datetime!
 ```
 
-Iterators are also supported.
+イテレータを通じて`toml::array`や`toml::table`を構築することも可能です。
 
 ```cpp
 std::vector<toml::integer> is{1,2,3,4,5};
@@ -439,18 +441,18 @@ std::map<std::string, double> ds{{"pi", 3.1416}, {"e", 2.7183}};
 toml::value v2(ds.begin(), ds.end()); // become a toml::table!
 ```
 
-And you can construct `toml::value` from `std::initializer_list` when you use
-C++11 compatible compiler.
+もしC++11対応のコンパイラを持っているなら、`std::initializer_list`から構築する
+ことも可能です。
 
 ```cpp
 toml::value v4{1,2,3,4,5}; // become an array
 toml::value v5{{"i", 42}, {"pi", 3.14}, {"key", "value"}}; // become a table
 ```
 
-### printing toml values
+### 値を出力する
 
-Boost.toml has `toml::format` function that converts a `toml::value` to
-`std::string`. Since it returns a string, you can output it.
+Boost.tomlは`toml::format`関数を持っており、`toml::value`を`std::string`
+に変換できます。
 
 ```cpp
 std::string i = toml::format(toml::value(42));
@@ -467,7 +469,8 @@ std::cout << toml::format(toml::value{1, 2, 3});
 // [1,2,3]
 ```
 
-`toml::format` sometimes adds newlines to avoid too long line.
+1行がとても長くなりそうな場合、`toml::format`は適宜改行を追加します。
+この長さは、デフォルトでは80文字です。
 
 ```cpp
 toml::value str("too long string would be splitted to multiple lines, "
@@ -489,8 +492,7 @@ std::cout << toml::format(ary);
 // ]
 ```
 
-`toml::format` automatically makes an element of array of tables inline when
-the length of lines will be less than a threshold.
+もし配列やテーブルの長さが十分短ければ、`toml::format`は配列やテーブルをインライン化します。
 
 ```cpp
 toml::value aot{
@@ -506,23 +508,21 @@ std::cout << foml::format(aot);
 // ]
 ```
 
-You can change this threshold by passing a value explicitly to `toml::format`.
+第二引数に数値を渡すことで、限界長さをデフォルトの80文字から任意の数字に変更できます。
 
 ```cpp
 std::cout << toml::format(val, 100);
 ```
 
-By default, the threshold is set as 80.
-
-It also supports `iostream`. When you output it into `std::ostream`,
-`toml::format` will be called automatically.
+Boost.tomlは`iostream`もサポートしています。
+`toml::value`を`std::ostream`へ出力すると、`toml::format` の結果が出力されます。
 
 ```cpp
 toml::value val;
 std::cout << val;
 ```
 
-You can set the threshold by putting `std::setw` before outputting your toml value.
+この場合、限界長さは`std::setw`によって設定します。
 
 ```cpp
 toml::value val;
@@ -530,10 +530,10 @@ std::cout << val; // calls toml::format(val, 80)
 std::cout << std::setw(100) << val; // calls toml::format(val, 100)
 ```
 
-### formatting toml data
+### ファイルを出力する
 
-If you pass a `toml::table` to `toml::format`, it prints a TOML file considering
-the passed `toml::table` as a root object.
+`toml::value`でなく`toml::table`を直接出力すると、そのテーブルが
+ルートオブジェクトであるとして適切なTOMLファイルを出力します。
 
 ```cpp
 toml::table tab;
@@ -551,16 +551,15 @@ std::cout << tab << std::endl;
 // e = 2.718000
 ```
 
-You can find the simplest example in `sample/` directory that reads toml file
-and outputs its content into `stdout`. You can see what happens if Boost.toml
-formats your toml file by passing a file to the sample program.
+`sample`ディレクトリに、TOMLファイルを読んで書き出すだけの単純なサンプルが
+用意されています。これを実行することで、フォーマット結果がどのようになるか
+試して見ることが可能です。
 
-## datetime operation
+## 日時の取り扱い
 
-Depending on Boost.Date\_Time, Boost.toml supports datetime operation.
-Since `toml::local_datetime` is actually just an alias of
-`boost::posix_time::ptime`,
-you can operate `datetime` in the same way as Boost.Date\_Time.
+Boost.Date\_Timeを使うことで、Boost.tomlは簡便な日時操作をサポートしています。
+`toml::local_datetime` は `boost::posix_time::ptime` のエイリアスなので、
+Boost.Date\_Time と同様の方法で`datetime` を扱うことができます。
 
 ```cpp
 boost::posix_time::ptime dt = toml::get<boost::posix_time::ptime>(v);
@@ -568,9 +567,8 @@ dt += boost::date_time::days(7);
 dt += boost::date_time::hours(12);
 ```
 
-And just for ease, Boost.toml imports some classes and enums.
-You can operate your datetime value in the same way as
-Boost.Date\_Time without writing namespace `boost::date_time::` explicitly.
+また、簡単のため、Boost.Date\_Timeでサポートされる型のいくつかにエイリアスを
+定義しています。
 
 ```cpp
 toml::value d(toml::date(2018, toml::Apr, 1));
@@ -581,16 +579,13 @@ toml::get<toml::local_datetime>(dt) += toml::months(2);
 toml::get<toml::local_datetime>(dt) += toml::days(10);
 ```
 
-See also [underlying types](#underlying-types).
+参考:
+- [データの型について](#データの型について)
+- [Boost.Date\_Timeとリンク](#Boost.Date_Timeとリンク).
 
-__NOTE__: It uses only a header-only portion of the Boost.Date\_Time library.
-So Boost.toml can be used without linking. But in order to use whole the
-functionalities of Boost.Date\_Time library, you might need linking.
+## データの型について
 
-## underlying types
-
-`toml::value` is based on a `boost::variant` that contains following toml value
-types.
+`toml::value`は、以下の型を持っている`boost::variant`によって実装されています。
 
 | toml value type   | boost.toml type                                                |
 |:------------------|:---------------------------------------------------------------|
@@ -606,14 +601,14 @@ types.
 | `array`           | `boost::container::vector<value>`                              |
 | `table`           | `boost::container::flat_map<key, value>`                       |
 
-### `toml::string` and `basic`, `literal` flags
+### 文字列の種類
 
-`toml::string` has an `enum kind_t` to represent `basic_string` and `literal_string`.
-But it can be converted to std::string automatically, so users do not need
-to consider about a difference between `toml::string` and `std::string`.
+`toml::string` は内部に `enum kind_t` を持っており、 `basic_string` と `literal_string`
+を区別できるようになっています。ですが、`std::string`への変換がサポートされているので、
+意識する必要はほとんどありません。
 
-an enum value can be passed to make `toml::value` that contains `toml::string`.
-It affects on the output format. By default, it is set as `basic_string`.
+`toml::value`を構築するときにも、この`enum`を渡すことができます。デフォルトでは、
+`basic_string`になります。
 
 ```cpp
 toml::value v0("foo"); // It will be a basic string by default.
@@ -621,27 +616,21 @@ toml::value v1("foo", toml::string::basic);
 toml::value v2("bar", toml::string::literal); // become a literal-string.
 ```
 
-### map class that represents `toml::table`
+### テーブルに対応するクラス
 
-Here, `flat_map` is used to store toml.table because normally the number of
-elements in data from file will never be changed. You can change it to a
-`boost::container::map` by defining `BOOST_TOML_USE_MAP_FOR_TABLE` before
-including it or as a compiler flag.
+Boost.tomlではテーブルに`boost::container::flat_map`を使っています。
+`BOOST_TOML_MAP_FOR_TABLE`を定義しておくと、`boost::container::map`を
+使用します。
 
-### Why not STL container?
+### なぜBoost.Containerを使うのか
 
-Because `Boost.Container` allows to contain incomplete types. So it allows to
-contain recursive data type.
-This feature removes the neccesity of using pointers to implement `toml::value`
-that is defined recursively. It will make the whole process faster.
+`Boost.Container`は不完全型をサポートしており、再帰的なデータ型が使えるからです。
+これによって、`toml::value`の実装でポインタを使用する必要がなくなります。
 
-NOTE:
+__注__
 
-`toml::value` is a recursively defined data type. `toml::array` is an
-array of `toml::value`, and it is also one of the types that `toml::value`
-contains.
-
-So the code looks like this.
+`toml::table`は`toml::key`から`toml::value`へのマップですが、`toml::value`に
+`toml::table`を格納することもできます。つまり、
 
 ```cpp
 struct value
@@ -652,46 +641,47 @@ struct value
 };
 ```
 
-In C++17, "Minimal incomplete type support for standard containers" is
-incorporated into the standard specification.
-But to realize this implementation before C++17, it may be the best way
-to use Boost.Container.
+C++17では"Minimal incomplete type support for standard containers"が標準入りした
+ので、C++17移行では`std::vector`で同じことができますが、Boost.tomlはC++17以前も
+サポートするために、Boost.Containerを使っています。
 
-### types that are convertible from toml value by using `toml::get`
+### `toml::get`によって変換可能な型の一覧
 
-You can get a reference that points an internal value if you specify one of
-the underlying types.
-See also [underlying types](#underlying-types).
-
-Here, types can be converted from toml types are listed.
+以下の表に、`toml::get`関数によって変換可能な型が示されています。
 
 | toml value type   | convertible types                                                             |
 |:------------------|:------------------------------------------------------------------------------|
-| `boolean`         | `bool` only                                                                   |
-| `integer`         | types that makes `boost::is_integral<T>::value` true (excepting `bool`).      |
-| `floating`        | types that makes `boost::is_floating_point<T>::value` true.                   |
+| `boolean`         | `bool` のみ                                                                   |
+| `integer`         | `boost::is_integral<T>::value` が `true` になる `bool` 以外の型               |
+| `floating`        | `boost::is_floating_point<T>::value` が `true` になる型                       |
 | `string`          | `std::string&`, `std::string_view`, `boost::string_view`, `boost::string_ref` |
 | `date`            | `std::tm`, `std::chrono::time_point`                                          |
 | `time`            | `std::tm`, `std::chrono::duration`                                            |
 | `local_datetime`  | `std::tm`, `std::chrono::time_point`                                          |
 | `offset_datetime` | `std::tm`, `std::chrono::time_point`                                          |
-| `array`           | container classes (see below).                                                |
-| `table`           | map-like classes (see below).                                                 |
+| `array`           | 各種コンテナクラス（後述）                                                    |
+| `table`           | 各種マップクラス（後述）                                                      |
 
-`toml::string` can safely be converted to an lvalue of `std::string`.
+`toml::array` は、以下の全てを満たすクラスに変換可能です。
+* `iterator` と `value_type` を持っている
+* `key_type` か `mapped_type` を持っていない
+* `std::string`, `std::string_view`, `boost::string_view`, `boost::string_ref`のどれかではない
+* `begin()`を持っており、それが書き換え可能なイテレータを返す
+* (`(std|boost)::array`でない場合)`size_t`を受け取り、容量を確保するコンストラクタが存在する
 
-Because `std::time_t` is an integral type, it collides with `toml::integer`.
-Thus getting `std::time_t` from datetime objects is not supported.
+標準ライブラリのコンテナ(`std::vector`, `std::array`, `std::deque`など)はこれらを満たします。
 
-Boost.chrono is currently not supported.
+`toml::table` は、以下の全てを満たすクラスに変換可能です。
+* `iterator`, `value_type`, `key_type`, `mapped_type`の全てを持っている。
+* `insert(pairof(key, value))`を持っている。
 
-`toml::array` can be converted to a class that ...
-* has member types named `iterator` and `value_type`
-* does not have a member type named `key_type` or `mapped_type`
-* is not one of the `std::string`, `std::string_view`, `boost::string_view` or `boost::string_ref`
+標準ライブラリのマップ(`std::map`, `std::unordered_map`)はこれらを満たします。
 
-`toml::table` can be converted to a class that ...
-* has member types named `iterator`, `value_type`, `key_type` and `mapped_type`.
+技術的な理由から、`datetime`オブジェクトの`time_t`への変換はサポートされていません。
+また、Boost.chronoも現在サポートされていません。
+
+内部で使われている型を指定した場合、それを指す参照を取得できます。
+詳細は[データの型について](#データの型について)を参照して下さい。
 
 ## 補遺
 
