@@ -21,10 +21,12 @@ inline bool is_array_of_table(const value& v)
 
 struct serializer : boost::static_visitor<std::string>
 {
-    serializer(const std::size_t w): width_(w)
+    serializer(const bool can_be_inlinized, const std::size_t w)
+        : can_be_inlinized_(can_be_inlinized), width_(w)
     {}
-    serializer(const std::size_t w, const std::vector<toml::key>& ks)
-        : width_(w), keys_(ks)
+    serializer(const bool can_be_inlinized, const std::size_t w,
+               const std::vector<toml::key>& ks)
+        : can_be_inlinized_(can_be_inlinized), width_(w), keys_(ks)
     {}
     ~serializer(){}
 
@@ -163,29 +165,35 @@ struct serializer : boost::static_visitor<std::string>
     }
     std::string operator()(const array& v) const
     {
-        if(!v.empty() && v.front().is(value::table_tag)) // array of table
+        if(!v.empty() && v.front().is(value::table_tag)) // array of tables
         {
             std::string token;
-            if(!keys_.empty())
+            if(this->can_be_inlinized_)
             {
-                token += serialize_key(keys_.back());
-                token += " = ";
-            }
-            bool width_exceeds = false;
-            token += "[\n";
-            for(array::const_iterator i(v.begin()), e(v.end()); i!=e; ++i)
-            {
-                const std::string t = make_inline_table(i->get<table>());
-                if(t.size() > width_ ||
-                   std::find(t.begin(), t.end(), '\n') != t.end())
-                {width_exceeds = true; break;}
-                token += t;
-                token += ",\n";
-            }
-            if(!width_exceeds)
-            {
-                token += "]\n";
-                return token;
+                if(!keys_.empty())
+                {
+                    token += serialize_key(keys_.back());
+                    token += " = ";
+                }
+                bool width_exceeds = false;
+                token += "[\n";
+                for(array::const_iterator i(v.begin()), e(v.end()); i!=e; ++i)
+                {
+                    const std::string t = make_inline_table(i->get<table>());
+                    if(t.size()+1 > width_ || // +1 for `,`
+                       std::find(t.begin(), t.end(), '\n') != t.end())
+                    {
+                        width_exceeds = true;
+                        break;
+                    }
+                    token += t;
+                    token += ",\n";
+                }
+                if(!width_exceeds)
+                {
+                    token += "]\n";
+                    return token;
+                }
             }
 
             token.clear();
@@ -199,7 +207,8 @@ struct serializer : boost::static_visitor<std::string>
             return token;
         }
 
-        { // try to print inline
+        // not an array of tables.
+        {
             const std::string inl = this->make_inline_array(v);
             if(inl.size() < this->width_ &&
                std::find(inl.begin(), inl.end(), '\n') == inl.end())
@@ -207,6 +216,8 @@ struct serializer : boost::static_visitor<std::string>
                 return inl;
             }
         }
+
+        // if the length exceeds this->width_, print multiline array
         std::string token;
         token += "[\n";
         for(array::const_iterator i(v.begin()), e(v.end()); i!=e; ++i)
@@ -220,24 +231,23 @@ struct serializer : boost::static_visitor<std::string>
 
     std::string operator()(const table& v) const
     {
-        if(this->width_ == std::numeric_limits<std::size_t>::max())
+        if(this->can_be_inlinized_)
         {
-            // for table inside of an element of array of table.
-            return make_inline_table(v);
-        }
-
-        bool table_only = !(v.empty());
-        for(table::const_iterator i(v.begin()), e(v.end()); i!=e; ++i)
-        {
-            if(!i->second.is(value::table_tag))
+            std::string token;
+            if(!this->keys_.empty())
             {
-                table_only = false;
-                break;
+                token += this->serialize_key(this->keys_.back());
+                token += " = ";
+            }
+            token += this->make_inline_table(v);
+            if(token.size() < this->width_)
+            {
+                return token;
             }
         }
 
         std::string token;
-        if(!keys_.empty() && !table_only)
+        if(!keys_.empty())
         {
             token += '[';
             token += serialize_dotted_key(keys_);
@@ -329,7 +339,7 @@ struct serializer : boost::static_visitor<std::string>
         token += '[';
         for(array::const_iterator i(v.begin()), e(v.end()); i!=e; ++i)
         {
-            token += apply_visitor(serializer(
+            token += apply_visitor(serializer(true,
                         std::numeric_limits<std::size_t>::max()), *i);
             token += ',';
         }
@@ -339,13 +349,14 @@ struct serializer : boost::static_visitor<std::string>
 
     std::string make_inline_table(const table& v) const
     {
+        assert(this->can_be_inlinized_);
         std::string token;
         token += '{';
         for(table::const_iterator i(v.begin()), e(v.end()); i!=e; ++i)
         {
             token += i->first;
             token += '=';
-            token += apply_visitor(serializer(
+            token += apply_visitor(serializer(true,
                         std::numeric_limits<std::size_t>::max()), i->second);
             token += ',';
         }
@@ -356,7 +367,7 @@ struct serializer : boost::static_visitor<std::string>
     std::string make_multiline_table(const table& v) const
     {
         std::string token;
-        // 1. print non-table stuff first
+        // print non-table stuff first
         for(table::const_iterator i(v.begin()), e(v.end()); i!=e; ++i)
         {
             if(i->second.is(value::table_tag) || is_array_of_table(i->second))
@@ -364,58 +375,63 @@ struct serializer : boost::static_visitor<std::string>
 
             token += serialize_key(i->first);
             token += " = ";
-            token += apply_visitor(serializer(width_), i->second);
+            token += apply_visitor(serializer(true, width_), i->second);
             token += "\n";
         }
 
-        // 2. array of tables
-        std::vector<std::string> ts;
+        // normal tables / array of tables
+        bool multiline_table_printed = false;
         for(table::const_iterator i(v.begin()), e(v.end()); i!=e; ++i)
         {
-            if(!is_array_of_table(i->second)){continue;}
+            if(!i->second.is(value::table_tag) && !is_array_of_table(i->second))
+            {
+                continue;
+            }
 
-            std::vector<toml::key> ks(keys_);
-            ks.push_back(i->first);
-
-            ts.push_back(apply_visitor(serializer(width_, ks), i->second));
-        }
-        for(std::vector<std::string>::const_iterator
-                i(ts.begin()), e(ts.end()); i!=e; ++i)
-        {
-            if(i->substr(0, 2) != "[[") {token += *i;}
-        }
-        for(std::vector<std::string>::const_iterator
-                i(ts.begin()), e(ts.end()); i!=e; ++i)
-        {
-            if(i->substr(0, 2) == "[[") {token += *i;}
-        }
-
-        // 3. normal tables
-        for(table::const_iterator i(v.begin()), e(v.end()); i!=e; ++i)
-        {
-            if(!i->second.is(value::table_tag)){continue;}
             std::vector<toml::key> ks(this->keys_);
             ks.push_back(i->first);
-            token += apply_visitor(serializer(width_, ks), i->second);
+
+            std::string tmp = apply_visitor(
+                serializer(!multiline_table_printed, width_, ks), i->second);
+            if((!multiline_table_printed) &&
+               std::find(tmp.begin(), tmp.end(), '\n') != tmp.end())
+            {
+                multiline_table_printed = true;
+            }
+            else
+            {
+                // still inline tables. need to add newline after this
+                tmp += '\n';
+            }
+            token += tmp;
         }
         return token;
     }
 
   private:
 
+    bool        can_be_inlinized_;
     std::size_t width_;
     std::vector<toml::key> keys_;
 };
 } // detail
 
-inline std::string format(const value& v, std::size_t w = 80)
+inline std::string format(const value& v)
 {
-    return v.apply_visitor(detail::serializer(w));
+    return v.apply_visitor(detail::serializer(false, 80));
+}
+inline std::string format(const table& t)
+{
+    return detail::serializer(false, 80)(t);
 }
 
-inline std::string format(const table& t, std::size_t w = 80)
+inline std::string format(const value& v, std::size_t w)
 {
-    return detail::serializer(w)(t);
+    return v.apply_visitor(detail::serializer(true, w));
+}
+inline std::string format(const table& t, std::size_t w)
+{
+    return detail::serializer(true, w)(t);
 }
 
 template<typename charT, typename traits>
@@ -423,7 +439,7 @@ std::basic_ostream<charT, traits>&
 operator<<(std::basic_ostream<charT, traits>& os, const value& v)
 {
     const std::size_t w = os.width();
-    os << format(v, (w > 2 ? w : 80));
+    os << v.apply_visitor(detail::serializer(false, (w > 2 ? w : 80)));
     return os;
 }
 
