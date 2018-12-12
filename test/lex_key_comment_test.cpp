@@ -30,7 +30,9 @@ BOOST_AUTO_TEST_CASE(test_dotted_key)
 {
     TOML_LEX_CHECK_ACCEPT(lex_key, "physical.color", "physical.color");
     TOML_LEX_CHECK_ACCEPT(lex_key, "physical.shape", "physical.shape");
-    TOML_LEX_CHECK_ACCEPT(lex_key, "x.y.z.w", "x.y.z.w");
+    TOML_LEX_CHECK_ACCEPT(lex_key, "x.y.z.w",    "x.y.z.w");
+    TOML_LEX_CHECK_ACCEPT(lex_key, "x .y. z. w", "x .y. z. w");
+    TOML_LEX_CHECK_ACCEPT(lex_key, "a  .  b", "a  .  b");
     TOML_LEX_CHECK_ACCEPT(lex_key, "site.\"google.com\"", "site.\"google.com\"");
 }
 

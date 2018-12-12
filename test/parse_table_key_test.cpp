@@ -46,7 +46,13 @@ BOOST_AUTO_TEST_CASE(test_table_dotted_key)
         keys[1] = "y";
         keys[2] = "z";
         keys[3] = "w";
-        TOML_PARSE_CHECK_EQUAL(parse_table_key, "[x.y.z.w]", std::vector<key>, keys);
+        TOML_PARSE_CHECK_EQUAL(parse_table_key, "[x.y.z.w]",         std::vector<key>, keys);
+        TOML_PARSE_CHECK_EQUAL(parse_table_key, "[ x.y.z.w ]",       std::vector<key>, keys);
+        TOML_PARSE_CHECK_EQUAL(parse_table_key, "[x. y. z. w]",      std::vector<key>, keys);
+        TOML_PARSE_CHECK_EQUAL(parse_table_key, "[x .y .z .w]",      std::vector<key>, keys);
+        TOML_PARSE_CHECK_EQUAL(parse_table_key, "[x .y. z .w]",      std::vector<key>, keys);
+        TOML_PARSE_CHECK_EQUAL(parse_table_key, "[x . y . z . w]",   std::vector<key>, keys);
+        TOML_PARSE_CHECK_EQUAL(parse_table_key, "[ x . y . z . w ]", std::vector<key>, keys);
     }
     {
         std::vector<key> keys(2);
@@ -93,7 +99,14 @@ BOOST_AUTO_TEST_CASE(test_array_of_table_dotted_key)
         keys[1] = "y";
         keys[2] = "z";
         keys[3] = "w";
-        TOML_PARSE_CHECK_EQUAL(parse_array_table_key, "[[x.y.z.w]]", std::vector<key>, keys);
+        TOML_PARSE_CHECK_EQUAL(parse_array_table_key, "[[x.y.z.w]]",         std::vector<key>, keys);
+        TOML_PARSE_CHECK_EQUAL(parse_array_table_key, "[[ x.y.z.w ]]",       std::vector<key>, keys);
+        TOML_PARSE_CHECK_EQUAL(parse_array_table_key, "[[x. y. z. w]]",      std::vector<key>, keys);
+        TOML_PARSE_CHECK_EQUAL(parse_array_table_key, "[[x .y .z .w]]",      std::vector<key>, keys);
+        TOML_PARSE_CHECK_EQUAL(parse_array_table_key, "[[x .y. z .w]]",      std::vector<key>, keys);
+        TOML_PARSE_CHECK_EQUAL(parse_array_table_key, "[[x . y . z . w]]",   std::vector<key>, keys);
+        TOML_PARSE_CHECK_EQUAL(parse_array_table_key, "[[ x . y . z . w ]]", std::vector<key>, keys);
+
     }
     {
         std::vector<key> keys(2);
