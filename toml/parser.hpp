@@ -1114,6 +1114,7 @@ parse_key(InputIterator& iter, const InputIterator last)
                 return err("toml::detail::parse_key: "
                     "dotted key contains invalid key -> " + k.unwrap_err());
             }
+            lex_ws::invoke(i, e); // skip whitespace before `.` (if any)
 
             if(!(i == e || *i == '.'))
             {
@@ -1124,6 +1125,7 @@ parse_key(InputIterator& iter, const InputIterator last)
             if(i != e)
             {
                 ++i; // to skip `.`
+                lex_ws::invoke(i, e); // skip whitespace after `.` (if any)
             }
         }
         return ok(keys);
@@ -1305,6 +1307,9 @@ parse_table_key(InputIterator& iter, const InputIterator last)
         return err("toml::detail::parse_table_key: invalid key in table title "
                 "-> " + current_line(first, last));
     }
+    // skip whitespace after key; like [ a.b ]
+    //                                      ^- this
+    lex_ws::invoke(iter, last);
 
     const boost::optional<std::string> close =
         lex_std_table_close::invoke(iter, last);
@@ -1342,6 +1347,9 @@ parse_array_table_key(InputIterator& iter, const InputIterator last)
         return err("toml::detail::parse_array_table_key: invalid key in table "
                 "title -> " + current_line(first, last));
     }
+    // skip whitespace after key; like [[ a.b ]]
+    //                                       ^- this
+    lex_ws::invoke(iter, last);
 
     const boost::optional<std::string> close =
         lex_array_table_close::invoke(iter, last);
