@@ -19,6 +19,10 @@ Boost.toml depends on relatively later versions of the Boost C++ Library
 
 __NOTE__: This library is not a part of Boost C++ Library.
 
+Are you looking for non-boost toml parser? Try [toml11](https://github.com/ToruNiina/toml11)!
+It has almost the same (maybe a bit more powerful) functionality and better error messages.
+But the only weakness is, as the name suggests, it requires compiler which conforms C++11 standard.
+
 ## Table of Contents
 
 - [example code](#example-code)
